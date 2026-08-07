@@ -1,0 +1,16 @@
+{
+    "name": "todolist-full-stack",
+    "version": "1.0.0",
+    "private": true,
+    "description": "",
+    "scripts": {
+      "dev": "pnpm -r --parallel dev",
+      "dev:server": "pnpm --filter server dev",
+      "dev:client": "pnpm --filter client dev",
+      "build": "pnpm -r build",
+      "lint": "pnpm -r lint"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+  }
