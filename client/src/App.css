@@ -75,6 +75,37 @@
   color: #1d4ed8;
 }
 
+.todo-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.todo-search input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid #d9dde5;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #171923;
+}
+
+.todo-search button {
+  flex: 0 0 auto;
+  border: 1px solid #d9dde5;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #344054;
+  cursor: pointer;
+}
+
+.todo-search button:hover {
+  background: #f2f4f7;
+}
+
 .error-message {
   margin: 0 0 16px;
   color: #b42318;
@@ -188,8 +219,13 @@
     flex-direction: column;
   }
 
-  .todo-form button {
+  .todo-form button,
+  .todo-search button {
     width: 100%;
+  }
+
+  .todo-search {
+    flex-direction: column;
   }
 
   .todo-item,

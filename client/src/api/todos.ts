@@ -8,8 +8,18 @@ export type Todo = {
 
 export type TodoFilter = "all" | "active" | "completed";
 
-export async function fetchTodos(status: TodoFilter) {
-  const response = await fetch(`/api/todos?status=${status}`);
+export async function fetchTodos(status: TodoFilter, search: string) {
+  const searchParams = new URLSearchParams({
+    status,
+  });
+
+  const trimmedSearch = search.trim();
+
+  if (trimmedSearch.length > 0) {
+    searchParams.set("search", trimmedSearch);
+  }
+
+  const response = await fetch(`/api/todos?${searchParams.toString()}`);
 
   if (!response.ok) {
     throw new Error("Failed to load todos");

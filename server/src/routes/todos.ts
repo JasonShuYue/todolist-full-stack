@@ -16,6 +16,7 @@ type TodoStatusFilter = "all" | "active" | "completed";
 
 type GetTodosQuery = {
   status?: unknown;
+  search?: unknown;
 };
 
 function isRecordNotFoundError(error: unknown) {
@@ -28,7 +29,7 @@ function isRecordNotFoundError(error: unknown) {
 export const todosRouter = Router();
 
 todosRouter.get("/", async (request, response) => {
-  const { status = "all" } = request.query as GetTodosQuery;
+  const { status = "all", search } = request.query as GetTodosQuery;
 
   if (status !== "all" && status !== "active" && status !== "completed") {
     response.status(400).json({
@@ -37,16 +38,24 @@ todosRouter.get("/", async (request, response) => {
     return;
   }
 
-  const where =
-    status === "active"
-      ? {
-          completed: false,
-        }
-      : status === "completed"
-        ? {
-            completed: true,
-          }
-        : undefined;
+  if (search !== undefined && typeof search !== "string") {
+    response.status(400).json({
+      message: "Invalid search query",
+    });
+    return;
+  }
+
+  const searchTerm = typeof search === "string" ? search.trim() : "";
+
+  const where = {
+    ...(status === "active" ? { completed: false } : {}),
+    ...(status === "completed" ? { completed: true } : {}),
+    ...(searchTerm.length > 0 ? {
+      title: {
+        contains: searchTerm,
+      },
+    } : {})
+  }
 
   const todos = await prisma.todo.findMany({
     where,

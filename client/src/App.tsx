@@ -16,15 +16,16 @@ function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<TodoFilter>("all");
+  const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function loadTodos(status: TodoFilter) {
+  async function loadTodos(status: TodoFilter, searchTerm: string) {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const data = await fetchTodos(status);
+      const data = await fetchTodos(status, searchTerm);
       setTodos(data);
     } catch {
       setErrorMessage("Failed to load todos");
@@ -44,7 +45,7 @@ function App() {
 
     try {
       await createTodo(trimmedTitle);
-      await loadTodos(filter);
+      await loadTodos(filter, search);
       setTitle("");
       setErrorMessage("");
     } catch {
@@ -58,14 +59,14 @@ function App() {
         completed: !todo.completed,
       });
 
-      if (filter === "all") {
+      if (filter === "all" && search.trim().length === 0) {
         setTodos((currentTodos) =>
           currentTodos.map((currentTodo) =>
             currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
           ),
         );
       } else {
-        await loadTodos(filter);
+        await loadTodos(filter, search);
       }
       setErrorMessage("");
     } catch {
@@ -85,11 +86,15 @@ function App() {
         title: trimmedTitle,
       });
 
-      setTodos((currentTodos) =>
-        currentTodos.map((currentTodo) =>
-          currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
-        ),
-      );
+      if (search.trim().length === 0) {
+        setTodos((currentTodos) =>
+          currentTodos.map((currentTodo) =>
+            currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
+          ),
+        );
+      } else {
+        await loadTodos(filter, search);
+      }
       setErrorMessage("");
     } catch {
       setErrorMessage("Failed to update todo");
@@ -109,8 +114,8 @@ function App() {
   }
 
   useEffect(() => {
-    void loadTodos(filter);
-  }, [filter]);
+    void loadTodos(filter, search);
+  }, [filter, search]);
 
   return (
     <main className="app">
@@ -145,6 +150,19 @@ function App() {
           >
             Completed
           </button>
+        </div>
+
+        <div className="todo-search">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search todos"
+          />
+          {search.trim().length > 0 && (
+            <button type="button" onClick={() => setSearch("")}>
+              Clear
+            </button>
+          )}
         </div>
 
         {errorMessage && <p className="error-message">{errorMessage}</p>}
