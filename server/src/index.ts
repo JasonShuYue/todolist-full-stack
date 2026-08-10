@@ -1,6 +1,8 @@
 import "dotenv/config"; // 用于环境变量
 import express from "express";
 import cors from "cors";
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "./lib/prisma.js";
 
 const app = express(); // 初始化实例
@@ -63,16 +65,32 @@ app.patch("/todos/:id", async (request, response) => {
     return;
   }
 
-  const todo = await prisma.todo.update({
-    where: {
-      id,
-    },
-    data: {
-      completed,
-    },
-  });
+  try {
+    const todo = await prisma.todo.update({
+      where: {
+        id,
+      },
+      data: {
+        completed,
+      },
+    });
 
-  response.json(todo);
+    response.json(todo);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      response.status(404).json({
+        message: "Todo not found",
+      });
+      return;
+    }
+
+    response.status(500).json({
+      message: "Internal server error",
+    });
+  }
 });
 
 app.delete("/todos/:id", async (requst, response) => {
@@ -85,13 +103,29 @@ app.delete("/todos/:id", async (requst, response) => {
     return;
   }
 
-  await prisma.todo.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await prisma.todo.delete({
+      where: {
+        id,
+      },
+    });
 
-  response.status(204).send();
+    response.status(204).send();
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      response.status(404).json({
+        message: "Todo not found",
+      });
+      return;
+    }
+
+    response.status(500).json({
+      message: "Internal server error",
+    });
+  }
 });
 
 const port = Number(process.env.PORT) || 3000;
