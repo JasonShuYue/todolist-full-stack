@@ -1,7 +1,16 @@
 import { Prisma } from "@prisma/client";
- import { Router } from "express";
+import { Router } from "express";
 
 import { prisma } from "../lib/prisma.js";
+
+type CreateTodoBody = {
+  title?: unknown;
+};
+
+type UpdateTodoBody = {
+  title?: unknown;
+  completed?: unknown;
+};
 
 function isRecordNotFoundError(error: unknown) {
   return (
@@ -11,7 +20,6 @@ function isRecordNotFoundError(error: unknown) {
 }
 
 export const todosRouter = Router();
-
 
 todosRouter.get("/", async (_request, response) => {
   const todos = await prisma.todo.findMany({
@@ -24,7 +32,7 @@ todosRouter.get("/", async (_request, response) => {
 });
 
 todosRouter.post("/", async (request, response) => {
-  const { title } = request.body;
+  const { title } = request.body as CreateTodoBody;
 
   if (typeof title !== "string" || title.trim().length === 0) {
     response.status(400).json({
@@ -44,7 +52,7 @@ todosRouter.post("/", async (request, response) => {
 
 todosRouter.patch("/:id", async (request, response) => {
   const id = Number(request.params.id);
-  const { title, completed } = request.body;
+  const { title, completed } = request.body as UpdateTodoBody;
 
   if (!Number.isInteger(id) || id <= 0) {
     response.status(400).json({
