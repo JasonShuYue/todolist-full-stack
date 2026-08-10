@@ -5,6 +5,13 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "./lib/prisma.js";
 
+function isRecordNotFoundError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2025"
+  );
+}
+
 const app = express(); // 初始化实例
 
 app.use(cors()); // 跨域中间件
@@ -49,7 +56,7 @@ app.post("/todos", async (request, response) => {
 
 app.patch("/todos/:id", async (request, response) => {
   const id = Number(request.params.id);
-  const { completed } = request.body;
+  const { title, completed } = request.body;
 
   if (!Number.isInteger(id) || id <= 0) {
     response.status(400).json({
@@ -58,9 +65,26 @@ app.patch("/todos/:id", async (request, response) => {
     return;
   }
 
-  if (typeof completed !== "boolean") {
+  if (
+    title !== undefined &&
+    (typeof title !== "string" || title.trim().length === 0)
+  ) {
+    response.status(400).json({
+      message: "Title must be a non-empty string",
+    });
+    return;
+  }
+
+  if (completed !== undefined && typeof completed !== "boolean") {
     response.status(400).json({
       message: "Completed must be a boolean",
+    });
+    return;
+  }
+
+  if (title === undefined && completed === undefined) {
+    response.status(400).json({
+      message: "No fields to update",
     });
     return;
   }
@@ -71,16 +95,14 @@ app.patch("/todos/:id", async (request, response) => {
         id,
       },
       data: {
-        completed,
+        ...(title !== undefined ? { title: title.trim() } : {}),
+        ...(completed !== undefined ? { completed } : {}),
       },
     });
 
     response.json(todo);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (isRecordNotFoundError(error)) {
       response.status(404).json({
         message: "Todo not found",
       });
@@ -93,8 +115,8 @@ app.patch("/todos/:id", async (request, response) => {
   }
 });
 
-app.delete("/todos/:id", async (requst, response) => {
-  const id = Number(requst.params.id);
+app.delete("/todos/:id", async (request, response) => {
+  const id = Number(request.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
     response.status(400).json({
@@ -112,10 +134,7 @@ app.delete("/todos/:id", async (requst, response) => {
 
     response.status(204).send();
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (isRecordNotFoundError(error)) {
       response.status(404).json({
         message: "Todo not found",
       });
