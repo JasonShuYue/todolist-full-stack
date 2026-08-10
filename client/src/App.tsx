@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import "./App.css";
 import {
@@ -26,7 +26,18 @@ function getInitialSearch() {
   return new URLSearchParams(window.location.search).get("search") ?? "";
 }
 
+function getInitialPage() {
+  const page = Number(new URLSearchParams(window.location.search).get("page"));
+
+  if (Number.isInteger(page) && page > 0) {
+    return page;
+  }
+
+  return 1;
+}
+
 function App() {
+  const hasCompletedInitialSearchSync = useRef(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<TodoFilter>(() => getInitialFilter());
@@ -34,16 +45,27 @@ function App() {
   const [debouncedSearch, setDebouncedSearch] = useState(() =>
     getInitialSearch(),
   );
+  const [page, setPage] = useState(() => getInitialPage());
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function loadTodos(status: TodoFilter, searchTerm: string) {
+  async function loadTodos(
+    status: TodoFilter,
+    searchTerm: string,
+    nextPage: number,
+  ) {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const data = await fetchTodos(status, searchTerm);
-      setTodos(data);
+      const data = await fetchTodos(status, searchTerm, nextPage, pageSize);
+      setTodos(data.items);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
+      setPage(data.page);
     } catch {
       setErrorMessage("Failed to load todos");
     } finally {
@@ -62,7 +84,7 @@ function App() {
 
     try {
       await createTodo(trimmedTitle);
-      await loadTodos(filter, debouncedSearch);
+      await loadTodos(filter, debouncedSearch, 1);
       setTitle("");
       setErrorMessage("");
     } catch {
@@ -83,7 +105,7 @@ function App() {
           ),
         );
       } else {
-        await loadTodos(filter, debouncedSearch);
+        await loadTodos(filter, debouncedSearch, page);
       }
       setErrorMessage("");
     } catch {
@@ -110,7 +132,7 @@ function App() {
           ),
         );
       } else {
-        await loadTodos(filter, debouncedSearch);
+        await loadTodos(filter, debouncedSearch, page);
       }
       setErrorMessage("");
     } catch {
@@ -132,6 +154,12 @@ function App() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
+      if (hasCompletedInitialSearchSync.current) {
+        setPage(1);
+      } else {
+        hasCompletedInitialSearchSync.current = true;
+      }
+
       setDebouncedSearch(search);
     }, 300);
 
@@ -141,8 +169,8 @@ function App() {
   }, [search]);
 
   useEffect(() => {
-    void loadTodos(filter, debouncedSearch);
-  }, [filter, debouncedSearch]);
+    void loadTodos(filter, debouncedSearch, page);
+  }, [filter, debouncedSearch, page]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams();
@@ -156,13 +184,17 @@ function App() {
       searchParams.set("search", trimmedSearch);
     }
 
+    if (page > 1) {
+      searchParams.set("page", String(page));
+    }
+
     const queryString = searchParams.toString();
     const nextUrl = queryString
       ? `${window.location.pathname}?${queryString}`
       : window.location.pathname;
 
     window.history.replaceState(null, "", nextUrl);
-  }, [filter, debouncedSearch]);
+  }, [filter, debouncedSearch, page]);
 
   return (
     <main className="app">
@@ -179,21 +211,30 @@ function App() {
           <button
             type="button"
             className={filter === "all" ? "active" : ""}
-            onClick={() => setFilter("all")}
+            onClick={() => {
+              setPage(1);
+              setFilter("all");
+            }}
           >
             All
           </button>
           <button
             type="button"
             className={filter === "active" ? "active" : ""}
-            onClick={() => setFilter("active")}
+            onClick={() => {
+              setPage(1);
+              setFilter("active");
+            }}
           >
             Active
           </button>
           <button
             type="button"
             className={filter === "completed" ? "active" : ""}
-            onClick={() => setFilter("completed")}
+            onClick={() => {
+              setPage(1);
+              setFilter("completed");
+            }}
           >
             Completed
           </button>
@@ -225,6 +266,30 @@ function App() {
             }
             onDeleteTodo={(todoId) => void handleDeleteTodo(todoId)}
           />
+        )}
+
+        {totalPages > 1 && (
+          <div className="todo-pagination">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((currentPage) => currentPage - 1)}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {page} of {totalPages} · {total} total
+            </span>
+
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((currentPage) => currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
         )}
       </section>
     </main>

@@ -8,9 +8,24 @@ export type Todo = {
 
 export type TodoFilter = "all" | "active" | "completed";
 
-export async function fetchTodos(status: TodoFilter, search: string) {
+export type TodosPage = {
+  items: Todo[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export async function fetchTodos(
+  status: TodoFilter,
+  search: string,
+  page: number,
+  pageSize: number,
+) {
   const searchParams = new URLSearchParams({
     status,
+    page: String(page),
+    pageSize: String(pageSize),
   });
 
   const trimmedSearch = search.trim();
@@ -25,7 +40,7 @@ export async function fetchTodos(status: TodoFilter, search: string) {
     throw new Error("Failed to load todos");
   }
 
-  return (await response.json()) as Todo[];
+  return (await response.json()) as TodosPage;
 }
 
 export async function createTodo(title: string) {
