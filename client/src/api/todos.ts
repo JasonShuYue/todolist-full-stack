@@ -6,8 +6,10 @@ export type Todo = {
   updatedAt: string;
 };
 
-export async function fetchTodos() {
-  const response = await fetch("/api/todos");
+export type TodoFilter = "all" | "active" | "completed";
+
+export async function fetchTodos(status: TodoFilter) {
+  const response = await fetch(`/api/todos?status=${status}`);
 
   if (!response.ok) {
     throw new Error("Failed to load todos");

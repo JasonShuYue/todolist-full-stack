@@ -6,12 +6,11 @@ import {
   deleteTodo,
   fetchTodos,
   updateTodo,
+  type TodoFilter,
   type Todo,
 } from "./api/todos";
 import { TodoForm } from "./components/TodoForm";
 import { TodoList } from "./components/TodoList";
-
-type TodoFilter = "all" | "active" | "completed";
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -20,12 +19,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function loadTodos() {
+  async function loadTodos(status: TodoFilter) {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const data = await fetchTodos();
+      const data = await fetchTodos(status);
       setTodos(data);
     } catch {
       setErrorMessage("Failed to load todos");
@@ -44,8 +43,8 @@ function App() {
     }
 
     try {
-      const todo = await createTodo(trimmedTitle);
-      setTodos((currentTodos) => [todo, ...currentTodos]);
+      await createTodo(trimmedTitle);
+      await loadTodos(filter);
       setTitle("");
       setErrorMessage("");
     } catch {
@@ -59,11 +58,15 @@ function App() {
         completed: !todo.completed,
       });
 
-      setTodos((currentTodos) =>
-        currentTodos.map((currentTodo) =>
-          currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
-        ),
-      );
+      if (filter === "all") {
+        setTodos((currentTodos) =>
+          currentTodos.map((currentTodo) =>
+            currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
+          ),
+        );
+      } else {
+        await loadTodos(filter);
+      }
       setErrorMessage("");
     } catch {
       setErrorMessage("Failed to update todo");
@@ -106,20 +109,8 @@ function App() {
   }
 
   useEffect(() => {
-    void loadTodos();
-  }, []);
-
-  const visibleTodos = todos.filter((todo) => {
-    if (filter === "active") {
-      return !todo.completed;
-    }
-
-    if (filter === "completed") {
-      return todo.completed;
-    }
-
-    return true;
-  });
+    void loadTodos(filter);
+  }, [filter]);
 
   return (
     <main className="app">
@@ -162,7 +153,7 @@ function App() {
           <p className="muted">Loading...</p>
         ) : (
           <TodoList
-            todos={visibleTodos}
+            todos={todos}
             onToggleTodo={(todo) => void handleToggleTodo(todo)}
             onUpdateTodoTitle={(todo, nextTitle) =>
               void handleUpdateTodoTitle(todo, nextTitle)

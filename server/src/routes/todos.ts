@@ -28,23 +28,25 @@ function isRecordNotFoundError(error: unknown) {
 export const todosRouter = Router();
 
 todosRouter.get("/", async (request, response) => {
-  const { status = 'all' } = request.query as GetTodosQuery;
-  const statusArr = ["all", "active", "completed"];
+  const { status = "all" } = request.query as GetTodosQuery;
 
-  if (!statusArr.includes(status as string)) {
+  if (status !== "all" && status !== "active" && status !== "completed") {
     response.status(400).json({
       message: "Invalid status filter",
     });
     return;
   }
 
-  const where = status === "active" ? {
-    completed: false,
-  } : status === "completed" ? {
-    completed: true,
-  } : undefined;
-
-  console.log('sssssss', status);
+  const where =
+    status === "active"
+      ? {
+          completed: false,
+        }
+      : status === "completed"
+        ? {
+            completed: true,
+          }
+        : undefined;
 
   const todos = await prisma.todo.findMany({
     where,
