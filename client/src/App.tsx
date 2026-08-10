@@ -11,9 +11,12 @@ import {
 import { TodoForm } from "./components/TodoForm";
 import { TodoList } from "./components/TodoList";
 
+type TodoFilter = "all" | "active" | "completed";
+
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
+  const [filter, setFilter] = useState<TodoFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -106,6 +109,18 @@ function App() {
     void loadTodos();
   }, []);
 
+  const visibleTodos = todos.filter((todo) => {
+    if (filter === "active") {
+      return !todo.completed;
+    }
+
+    if (filter === "completed") {
+      return todo.completed;
+    }
+
+    return true;
+  });
+
   return (
     <main className="app">
       <section className="todo-panel">
@@ -117,13 +132,37 @@ function App() {
           onSubmit={handleCreateTodo}
         />
 
+        <div className="todo-filters">
+          <button
+            type="button"
+            className={filter === "all" ? "active" : ""}
+            onClick={() => setFilter("all")}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className={filter === "active" ? "active" : ""}
+            onClick={() => setFilter("active")}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            className={filter === "completed" ? "active" : ""}
+            onClick={() => setFilter("completed")}
+          >
+            Completed
+          </button>
+        </div>
+
         {errorMessage && <p className="error-message">{errorMessage}</p>}
 
         {isLoading ? (
           <p className="muted">Loading...</p>
         ) : (
           <TodoList
-            todos={todos}
+            todos={visibleTodos}
             onToggleTodo={(todo) => void handleToggleTodo(todo)}
             onUpdateTodoTitle={(todo, nextTitle) =>
               void handleUpdateTodoTitle(todo, nextTitle)
