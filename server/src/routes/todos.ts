@@ -12,6 +12,12 @@ type UpdateTodoBody = {
   completed?: unknown;
 };
 
+type TodoStatusFilter = "all" | "active" | "completed";
+
+type GetTodosQuery = {
+  status?: unknown;
+};
+
 function isRecordNotFoundError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -21,8 +27,27 @@ function isRecordNotFoundError(error: unknown) {
 
 export const todosRouter = Router();
 
-todosRouter.get("/", async (_request, response) => {
+todosRouter.get("/", async (request, response) => {
+  const { status = 'all' } = request.query as GetTodosQuery;
+  const statusArr = ["all", "active", "completed"];
+
+  if (!statusArr.includes(status as string)) {
+    response.status(400).json({
+      message: "Invalid status filter",
+    });
+    return;
+  }
+
+  const where = status === "active" ? {
+    completed: false,
+  } : status === "completed" ? {
+    completed: true,
+  } : undefined;
+
+  console.log('sssssss', status);
+
   const todos = await prisma.todo.findMany({
+    where,
     orderBy: {
       createdAt: "desc",
     },
