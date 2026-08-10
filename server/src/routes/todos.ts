@@ -17,6 +17,8 @@ type TodoStatusFilter = "all" | "active" | "completed";
 type GetTodosQuery = {
   status?: unknown;
   search?: unknown;
+  page?: unknown;
+  pageSize?: unknown;
 };
 
 function isRecordNotFoundError(error: unknown) {
@@ -29,7 +31,16 @@ function isRecordNotFoundError(error: unknown) {
 export const todosRouter = Router();
 
 todosRouter.get("/", async (request, response) => {
-  const { status = "all", search } = request.query as GetTodosQuery;
+  const {
+    status = "all",
+    search,
+    page = "1",
+    pageSize = "10",
+  } = request.query as GetTodosQuery;
+
+  const searchTerm = typeof search === "string" ? search.trim() : "";
+  const pageNumber = Number(page);
+  const pageSizeNumber = Number(pageSize);
 
   if (status !== "all" && status !== "active" && status !== "completed") {
     response.status(400).json({
@@ -45,26 +56,62 @@ todosRouter.get("/", async (request, response) => {
     return;
   }
 
-  const searchTerm = typeof search === "string" ? search.trim() : "";
+  if (typeof page !== "string" || typeof pageSize !== "string") {
+    response.status(400).json({
+      message: "Invalid pagination query",
+    });
+    return;
+  }
+
+  if (
+    !Number.isInteger(pageNumber) ||
+    pageNumber < 1 ||
+    !Number.isInteger(pageSizeNumber) ||
+    pageSizeNumber < 1 ||
+    pageSizeNumber > 50
+  ) {
+    response.status(400).json({
+      message: "Invalid pagination query",
+    });
+    return;
+  }
 
   const where = {
     ...(status === "active" ? { completed: false } : {}),
     ...(status === "completed" ? { completed: true } : {}),
-    ...(searchTerm.length > 0 ? {
-      title: {
-        contains: searchTerm,
+    ...(searchTerm.length > 0
+      ? {
+          title: {
+            contains: searchTerm,
+          },
+        }
+      : {}),
+  };
+
+  const skip = (pageNumber - 1) * pageSizeNumber;
+  const take = pageSizeNumber;
+
+  const [todos, total] = await Promise.all([
+    prisma.todo.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
       },
-    } : {})
-  }
+      skip,
+      take,
+    }),
+    prisma.todo.count({
+      where,
+    }),
+  ]);
 
-  const todos = await prisma.todo.findMany({
-    where,
-    orderBy: {
-      createdAt: "desc",
-    },
+  response.json({
+    items: todos,
+    total,
+    page: pageNumber,
+    pageSize: pageSizeNumber,
+    totalPages: Math.ceil(total / pageSizeNumber),
   });
-
-  response.json(todos);
 });
 
 todosRouter.post("/", async (request, response) => {

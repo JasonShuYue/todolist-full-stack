@@ -12,11 +12,28 @@ import {
 import { TodoForm } from "./components/TodoForm";
 import { TodoList } from "./components/TodoList";
 
+function getInitialFilter(): TodoFilter {
+  const status = new URLSearchParams(window.location.search).get("status");
+
+  if (status === "active" || status === "completed") {
+    return status;
+  }
+
+  return "all";
+}
+
+function getInitialSearch() {
+  return new URLSearchParams(window.location.search).get("search") ?? "";
+}
+
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState<TodoFilter>("all");
-  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<TodoFilter>(() => getInitialFilter());
+  const [search, setSearch] = useState(() => getInitialSearch());
+  const [debouncedSearch, setDebouncedSearch] = useState(() =>
+    getInitialSearch(),
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -45,7 +62,7 @@ function App() {
 
     try {
       await createTodo(trimmedTitle);
-      await loadTodos(filter, search);
+      await loadTodos(filter, debouncedSearch);
       setTitle("");
       setErrorMessage("");
     } catch {
@@ -59,14 +76,14 @@ function App() {
         completed: !todo.completed,
       });
 
-      if (filter === "all" && search.trim().length === 0) {
+      if (filter === "all" && debouncedSearch.trim().length === 0) {
         setTodos((currentTodos) =>
           currentTodos.map((currentTodo) =>
             currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
           ),
         );
       } else {
-        await loadTodos(filter, search);
+        await loadTodos(filter, debouncedSearch);
       }
       setErrorMessage("");
     } catch {
@@ -86,14 +103,14 @@ function App() {
         title: trimmedTitle,
       });
 
-      if (search.trim().length === 0) {
+      if (debouncedSearch.trim().length === 0) {
         setTodos((currentTodos) =>
           currentTodos.map((currentTodo) =>
             currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
           ),
         );
       } else {
-        await loadTodos(filter, search);
+        await loadTodos(filter, debouncedSearch);
       }
       setErrorMessage("");
     } catch {
@@ -114,8 +131,38 @@ function App() {
   }
 
   useEffect(() => {
-    void loadTodos(filter, search);
-  }, [filter, search]);
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [search]);
+
+  useEffect(() => {
+    void loadTodos(filter, debouncedSearch);
+  }, [filter, debouncedSearch]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams();
+    const trimmedSearch = debouncedSearch.trim();
+
+    if (filter !== "all") {
+      searchParams.set("status", filter);
+    }
+
+    if (trimmedSearch.length > 0) {
+      searchParams.set("search", trimmedSearch);
+    }
+
+    const queryString = searchParams.toString();
+    const nextUrl = queryString
+      ? `${window.location.pathname}?${queryString}`
+      : window.location.pathname;
+
+    window.history.replaceState(null, "", nextUrl);
+  }, [filter, debouncedSearch]);
 
   return (
     <main className="app">
