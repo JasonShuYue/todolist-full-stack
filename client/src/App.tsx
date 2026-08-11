@@ -143,9 +143,21 @@ function App() {
   async function handleDeleteTodo(todoId: number) {
     try {
       await deleteTodo(todoId);
-      setTodos((currentTodos) =>
-        currentTodos.filter((todo) => todo.id !== todoId),
-      );
+
+      const nextTodos = todos.filter((todo) => todo.id !== todoId);
+      const nextTotal = Math.max(total - 1, 0);
+      const nextTotalPages = Math.ceil(nextTotal / pageSize);
+      const nextPage =
+        nextTodos.length === 0 && page > 1 ? Math.max(page - 1, 1) : page;
+
+      if (nextPage !== page) {
+        setPage(nextPage);
+      } else {
+        setTodos(nextTodos);
+        setTotal(nextTotal);
+        setTotalPages(nextTotalPages);
+      }
+
       setErrorMessage("");
     } catch {
       setErrorMessage("Failed to delete todo");
