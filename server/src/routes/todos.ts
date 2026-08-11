@@ -88,29 +88,30 @@ todosRouter.get("/", async (request, response) => {
       : {}),
   };
 
-  const skip = (pageNumber - 1) * pageSizeNumber;
+  const total = await prisma.todo.count({
+    where,
+  });
+  const totalPages = Math.ceil(total / pageSizeNumber);
+  const currentPage =
+    totalPages > 0 ? Math.min(pageNumber, totalPages) : pageNumber;
+  const skip = (currentPage - 1) * pageSizeNumber;
   const take = pageSizeNumber;
 
-  const [todos, total] = await Promise.all([
-    prisma.todo.findMany({
-      where,
-      orderBy: {
-        createdAt: "desc",
-      },
-      skip,
-      take,
-    }),
-    prisma.todo.count({
-      where,
-    }),
-  ]);
+  const todos = await prisma.todo.findMany({
+    where,
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip,
+    take,
+  });
 
   response.json({
     items: todos,
     total,
-    page: pageNumber,
+    page: currentPage,
     pageSize: pageSizeNumber,
-    totalPages: Math.ceil(total / pageSizeNumber),
+    totalPages,
   });
 });
 
