@@ -4,20 +4,28 @@ import { z } from "zod";
 
 import { prisma } from "../lib/prisma.js";
 
-type CreateTodoBody = {
-  title?: unknown;
-};
-
-type UpdateTodoBody = {
-  title?: unknown;
-  completed?: unknown;
-};
-
 const getTodosQuerySchema = z.object({
   status: z.enum(["all", "active", "completed"]).default("all"),
   search: z.string().optional().default(""),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+const createTodosBodySchema = z.object({
+  title: z.string().trim().min(1),
+});
+
+const updateTodoBodySchema = z
+  .object({
+    title: z.string().trim().min(1).optional(),
+    completed: z.boolean().optional(),
+  })
+  .refine((data) => data.title !== undefined || data.completed !== undefined, {
+    message: "No fields update",
+  });
+
+const todoParamsSchema = z.object({
+  id: z.coerce.number().int().min(1),
 });
 
 function isRecordNotFoundError(error: unknown) {
@@ -86,18 +94,20 @@ todosRouter.get("/", async (request, response) => {
 });
 
 todosRouter.post("/", async (request, response) => {
-  const { title } = request.body as CreateTodoBody;
+  const parseResult = createTodosBodySchema.safeParse(request.body);
 
-  if (typeof title !== "string" || title.trim().length === 0) {
+  if (!parseResult.success) {
     response.status(400).json({
       message: "Title is required",
     });
     return;
   }
 
+  const { title } = parseResult.data;
+
   const todo = await prisma.todo.create({
     data: {
-      title: title.trim(),
+      title,
     },
   });
 
@@ -105,8 +115,19 @@ todosRouter.post("/", async (request, response) => {
 });
 
 todosRouter.patch("/:id", async (request, response) => {
-  const id = Number(request.params.id);
-  const { title, completed } = request.body as UpdateTodoBody;
+  const parseParamsResult = todoParamsSchema.safeParse(request.params);
+
+  if (!parseParamsResult.success) {
+    response
+      .status(400)
+      .json({
+        message: "Invalid todo id",
+      })
+      .json();
+    return;
+  }
+
+  const { id } = parseParamsResult.data;
 
   if (!Number.isInteger(id) || id <= 0) {
     response.status(400).json({
@@ -115,29 +136,17 @@ todosRouter.patch("/:id", async (request, response) => {
     return;
   }
 
-  if (
-    title !== undefined &&
-    (typeof title !== "string" || title.trim().length === 0)
-  ) {
+  const parseResult = updateTodoBodySchema.safeParse(request.body);
+
+  if (!parseResult.success) {
     response.status(400).json({
-      message: "Title must be a non-empty string",
+      message: "Invalid todo update",
     });
+
     return;
   }
 
-  if (completed !== undefined && typeof completed !== "boolean") {
-    response.status(400).json({
-      message: "Completed must be a boolean",
-    });
-    return;
-  }
-
-  if (title === undefined && completed === undefined) {
-    response.status(400).json({
-      message: "No fields to update",
-    });
-    return;
-  }
+  const { title, completed } = parseResult.data;
 
   try {
     const todo = await prisma.todo.update({
@@ -145,7 +154,7 @@ todosRouter.patch("/:id", async (request, response) => {
         id,
       },
       data: {
-        ...(title !== undefined ? { title: title.trim() } : {}),
+        ...(title !== undefined ? { title } : {}),
         ...(completed !== undefined ? { completed } : {}),
       },
     });
@@ -166,14 +175,19 @@ todosRouter.patch("/:id", async (request, response) => {
 });
 
 todosRouter.delete("/:id", async (request, response) => {
-  const id = Number(request.params.id);
+  const parseParamsResult = todoParamsSchema.safeParse(request.params);
 
-  if (!Number.isInteger(id) || id <= 0) {
-    response.status(400).json({
-      message: "Invalid todo id",
-    });
+  if (!parseParamsResult.success) {
+    response
+      .status(400)
+      .json({
+        message: "Invalid todo id",
+      })
+      .json();
     return;
   }
+
+  const { id } = parseParamsResult.data;
 
   try {
     await prisma.todo.delete({
