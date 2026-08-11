@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
+import { z } from "zod";
 
 import { prisma } from "../lib/prisma.js";
 
@@ -12,14 +13,12 @@ type UpdateTodoBody = {
   completed?: unknown;
 };
 
-type TodoStatusFilter = "all" | "active" | "completed";
-
-type GetTodosQuery = {
-  status?: unknown;
-  search?: unknown;
-  page?: unknown;
-  pageSize?: unknown;
-};
+const getTodosQuerySchema = z.object({
+  status: z.enum(["all", "active", "completed"]).default("all"),
+  search: z.string().optional().default(""),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(10),
+});
 
 function isRecordNotFoundError(error: unknown) {
   return (
@@ -31,58 +30,29 @@ function isRecordNotFoundError(error: unknown) {
 export const todosRouter = Router();
 
 todosRouter.get("/", async (request, response) => {
+  const parseResult = getTodosQuerySchema.safeParse(request.query);
+
+  if (!parseResult.success) {
+    response.status(400).json({
+      message: "Invalid query",
+    });
+    return;
+  }
+
   const {
-    status = "all",
+    status,
     search,
-    page = "1",
-    pageSize = "10",
-  } = request.query as GetTodosQuery;
-
-  const searchTerm = typeof search === "string" ? search.trim() : "";
-  const pageNumber = Number(page);
-  const pageSizeNumber = Number(pageSize);
-
-  if (status !== "all" && status !== "active" && status !== "completed") {
-    response.status(400).json({
-      message: "Invalid status filter",
-    });
-    return;
-  }
-
-  if (search !== undefined && typeof search !== "string") {
-    response.status(400).json({
-      message: "Invalid search query",
-    });
-    return;
-  }
-
-  if (typeof page !== "string" || typeof pageSize !== "string") {
-    response.status(400).json({
-      message: "Invalid pagination query",
-    });
-    return;
-  }
-
-  if (
-    !Number.isInteger(pageNumber) ||
-    pageNumber < 1 ||
-    !Number.isInteger(pageSizeNumber) ||
-    pageSizeNumber < 1 ||
-    pageSizeNumber > 50
-  ) {
-    response.status(400).json({
-      message: "Invalid pagination query",
-    });
-    return;
-  }
+    page: pageNumber,
+    pageSize: pageSizeNumber,
+  } = parseResult.data;
 
   const where = {
     ...(status === "active" ? { completed: false } : {}),
     ...(status === "completed" ? { completed: true } : {}),
-    ...(searchTerm.length > 0
+    ...(search.length > 0
       ? {
           title: {
-            contains: searchTerm,
+            contains: search,
           },
         }
       : {}),
