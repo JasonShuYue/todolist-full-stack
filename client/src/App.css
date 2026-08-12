@@ -50,6 +50,12 @@
   background: #1d4ed8;
 }
 
+.todo-form input:disabled,
+.todo-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .todo-filters {
   display: flex;
   gap: 8px;
@@ -176,6 +182,14 @@
 .todo-actions button:hover,
 .todo-edit-form button:hover {
   background: #f2f4f7;
+}
+
+.todo-actions button:disabled,
+.todo-edit-form button:disabled,
+.todo-edit-form input:disabled,
+.todo-content input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .todo-edit-form {

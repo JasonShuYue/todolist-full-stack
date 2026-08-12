@@ -3,6 +3,7 @@ import { TodoItem } from "./TodoItem";
 
 type TodoListProps = {
   todos: Todo[];
+  busyTodoId: number | null;
   onToggleTodo: (todo: Todo) => void;
   onUpdateTodoTitle: (todo: Todo, nextTitle: string) => void;
   onDeleteTodo: (todoId: number) => void;
@@ -10,6 +11,7 @@ type TodoListProps = {
 
 export function TodoList({
   todos,
+  busyTodoId,
   onToggleTodo,
   onUpdateTodoTitle,
   onDeleteTodo,
@@ -24,6 +26,7 @@ export function TodoList({
         <TodoItem
           key={todo.id}
           todo={todo}
+          isBusy={busyTodoId === todo.id}
           onToggle={onToggleTodo}
           onUpdateTitle={onUpdateTodoTitle}
           onDelete={onDeleteTodo}

@@ -4,6 +4,7 @@ import type { Todo } from "../api/todos";
 
 type TodoItemProps = {
   todo: Todo;
+  isBusy: boolean;
   onToggle: (todo: Todo) => void;
   onUpdateTitle: (todo: Todo, nextTitle: string) => void;
   onDelete: (todoId: number) => void;
@@ -11,6 +12,7 @@ type TodoItemProps = {
 
 export function TodoItem({
   todo,
+  isBusy,
   onToggle,
   onUpdateTitle,
   onDelete,
@@ -19,6 +21,10 @@ export function TodoItem({
   const [draftTitle, setDraftTitle] = useState(todo.title);
 
   function handleStartEditing() {
+    if (isBusy) {
+      return;
+    }
+
     setDraftTitle(todo.title);
     setIsEditing(true);
   }
@@ -42,9 +48,12 @@ export function TodoItem({
             value={draftTitle}
             onChange={(event) => setDraftTitle(event.target.value)}
             autoFocus
+            disabled={isBusy}
           />
-          <button type="submit">Save</button>
-          <button type="button" onClick={handleCancelEditing}>
+          <button type="submit" disabled={isBusy}>
+            {isBusy ? "Saving..." : "Save"}
+          </button>
+          <button type="button" onClick={handleCancelEditing} disabled={isBusy}>
             Cancel
           </button>
         </form>
@@ -55,6 +64,7 @@ export function TodoItem({
               type="checkbox"
               checked={todo.completed}
               onChange={() => onToggle(todo)}
+              disabled={isBusy}
             />
             <span
               className={todo.completed ? "todo-title completed" : "todo-title"}
@@ -64,15 +74,16 @@ export function TodoItem({
           </label>
 
           <div className="todo-actions">
-            <button type="button" onClick={handleStartEditing}>
+            <button type="button" onClick={handleStartEditing} disabled={isBusy}>
               Edit
             </button>
             <button
               className="delete-button"
               type="button"
               onClick={() => onDelete(todo.id)}
+              disabled={isBusy}
             >
-              Delete
+              {isBusy ? "Working..." : "Delete"}
             </button>
           </div>
         </>
