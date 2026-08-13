@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "../lib/prisma.js";
-import { listTodos } from "./todos.js";
+import { listTodos, createTodo, updateTodo, deleteTodo } from "./todos.js";
 
 describe("listTodos", () => {
   // 开始之前，将数据库清空
@@ -165,5 +165,67 @@ describe("listTodos", () => {
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(10);
     expect(result.totalPages).toBe(0);
+  });
+});
+
+describe("createTodo", () => {
+  // 开始之前，将数据库清空
+  beforeEach(async () => {
+    await prisma.todo.deleteMany();
+  });
+
+  it("creates a todo width default completed=false", async () => {
+    const title = "新建测试todo";
+    const todo = await createTodo({
+      title,
+    });
+
+    expect(todo.title).toBe(title);
+    expect(todo.completed).toBe(false);
+  });
+});
+
+describe("updateTodo", () => {
+  beforeEach(async () => {
+    await prisma.todo.deleteMany();
+  });
+
+  it("update a todo", async () => {
+    const todo = await prisma.todo.create({
+      data: {
+        title: "Old Title",
+      },
+    });
+
+    const updatedTodo = await updateTodo({
+      id: todo.id,
+      title: "New Title",
+    });
+
+    expect(updatedTodo.title).toBe("New Title");
+  });
+});
+
+describe("deleteTodo", async () => {
+  beforeEach(async () => {
+    await prisma.todo.deleteMany();
+  });
+
+  it("delete a todo", async () => {
+    const todo = await prisma.todo.create({
+      data: {
+        title: "Todo to delete",
+      },
+    });
+
+    await deleteTodo(todo.id);
+
+    const deletedTodo = await prisma.todo.findUnique({
+      where: {
+        id: todo.id,
+      },
+    });
+
+    expect(deletedTodo).toBeNull();
   });
 });
