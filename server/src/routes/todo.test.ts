@@ -74,7 +74,7 @@ describe("POST /todos", () => {
     await prisma.todo.deleteMany();
   });
 
-  it("create a todo", async () => {
+  it("creates a todo", async () => {
     const response = await request(app)
       .post("/todos")
       .send({
@@ -87,7 +87,7 @@ describe("POST /todos", () => {
     expect(response.body.id).toEqual(expect.any(Number));
   });
 
-  it("return 400 when title is empty", async () => {
+  it("returns 400 when title is empty", async () => {
     const response = await request(app)
       .post("/todos")
       .send({
@@ -107,7 +107,7 @@ describe("PATCH /todos/:id", () => {
     await prisma.todo.deleteMany();
   });
 
-  it("update a todo", async () => {
+  it("updates a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
         title: "Old title",

@@ -93,7 +93,7 @@ describe("listTodos", () => {
     expect(result.items[0].completed).toBe(true);
   });
 
-  it("searchs todos by title", async () => {
+  it("searches todos by title", async () => {
     await prisma.todo.createMany({
       data: [
         {
@@ -152,7 +152,7 @@ describe("listTodos", () => {
     expect(result.totalPages).toBe(2);
   });
 
-  it("没有 todo 时返回空数组，并且 totalPages 是 0", async () => {
+  it("returns an empty page when there are no todos", async () => {
     const result = await listTodos({
       status: "all",
       search: "",
@@ -174,7 +174,7 @@ describe("createTodo", () => {
     await prisma.todo.deleteMany();
   });
 
-  it("creates a todo width default completed=false", async () => {
+  it("creates a todo with default completed false", async () => {
     const title = "新建测试todo";
     const todo = await createTodo({
       title,
@@ -190,7 +190,7 @@ describe("updateTodo", () => {
     await prisma.todo.deleteMany();
   });
 
-  it("update a todo", async () => {
+  it("updates a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
         title: "Old Title",
@@ -206,12 +206,12 @@ describe("updateTodo", () => {
   });
 });
 
-describe("deleteTodo", async () => {
+describe("deleteTodo", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
   });
 
-  it("delete a todo", async () => {
+  it("deletes a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
         title: "Todo to delete",
