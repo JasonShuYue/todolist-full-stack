@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "../lib/prisma.js";
 import { listTodos, createTodo, updateTodo, deleteTodo } from "./todos.js";
@@ -228,4 +228,8 @@ describe("deleteTodo", async () => {
 
     expect(deletedTodo).toBeNull();
   });
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
 });
