@@ -18,6 +18,8 @@ import {
 
 export const todosRouter = Router();
 
+const demoUserId = 1;
+
 todosRouter.get("/", async (request, response) => {
   const parseResult = parseWithSchema(getTodosQuerySchema, request.query);
 
@@ -34,6 +36,7 @@ todosRouter.get("/", async (request, response) => {
   } = parseResult.data;
 
   const result = await listTodos({
+    userId: demoUserId,
     status,
     search,
     page: pageNumber,
@@ -55,6 +58,7 @@ todosRouter.post("/", async (request, response) => {
 
   const todo = await createTodo({
     title,
+    userId: demoUserId,
   });
 
   response.status(201).json(todo);
@@ -83,6 +87,7 @@ todosRouter.patch("/:id", async (request, response) => {
   try {
     const todo = await updateTodo({
       id,
+      userId: demoUserId,
       title,
       completed,
     });
@@ -109,7 +114,10 @@ todosRouter.delete("/:id", async (request, response) => {
   const { id } = parseParamsResult.data;
 
   try {
-    await deleteTodo(id);
+    await deleteTodo({
+      id,
+      userId: demoUserId,
+    });
 
     response.status(204).send();
   } catch (error) {

@@ -3,10 +3,23 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../lib/prisma.js";
 import { listTodos, createTodo, updateTodo, deleteTodo } from "./todos.js";
 
+const testUser = {
+  email: "test@example.com",
+  passwordHash: "hashed-password",
+};
+
+let testUserId: number;
+
 describe("listTodos", () => {
   // 开始之前，将数据库清空
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+    const user = await prisma.user.create({
+      data: testUser,
+    });
+
+    testUserId = user.id;
   });
 
   it("returns paginated todos", async () => {
@@ -14,17 +27,21 @@ describe("listTodos", () => {
       data: [
         {
           title: "First todo",
+          userId: testUserId,
         },
         {
           title: "Second todo",
+          userId: testUserId,
         },
         {
           title: "Third todo",
+          userId: testUserId,
         },
       ],
     });
 
     const result = await listTodos({
+      userId: testUserId,
       status: "all",
       search: "",
       page: 1,
@@ -45,15 +62,18 @@ describe("listTodos", () => {
         {
           title: "Active todo",
           completed: false,
+          userId: testUserId,
         },
         {
           title: "Completed todo",
           completed: true,
+          userId: testUserId,
         },
       ],
     });
 
     const result = await listTodos({
+      userId: testUserId,
       status: "active",
       search: "",
       page: 1,
@@ -72,15 +92,18 @@ describe("listTodos", () => {
         {
           title: "Active todo",
           completed: false,
+          userId: testUserId,
         },
         {
           title: "Completed todo",
           completed: true,
+          userId: testUserId,
         },
       ],
     });
 
     const result = await listTodos({
+      userId: testUserId,
       status: "completed",
       search: "",
       page: 1,
@@ -98,17 +121,21 @@ describe("listTodos", () => {
       data: [
         {
           title: "Learn Prisma",
+          userId: testUserId,
         },
         {
           title: "Learn React",
+          userId: testUserId,
         },
         {
           title: "Buy milk",
+          userId: testUserId,
         },
       ],
     });
 
     const result = await listTodos({
+      userId: testUserId,
       status: "all",
       search: "Learn",
       page: 1,
@@ -128,17 +155,21 @@ describe("listTodos", () => {
       data: [
         {
           title: "First todo",
+          userId: testUserId,
         },
         {
           title: "Second todo",
+          userId: testUserId,
         },
         {
           title: "Third todo",
+          userId: testUserId,
         },
       ],
     });
 
     const result = await listTodos({
+      userId: testUserId,
       status: "all",
       search: "",
       page: 99,
@@ -154,6 +185,7 @@ describe("listTodos", () => {
 
   it("returns an empty page when there are no todos", async () => {
     const result = await listTodos({
+      userId: testUserId,
       status: "all",
       search: "",
       page: 1,
@@ -172,12 +204,20 @@ describe("createTodo", () => {
   // 开始之前，将数据库清空
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+
+    const user = await prisma.user.create({
+      data: testUser,
+    });
+
+    testUserId = user.id;
   });
 
   it("creates a todo with default completed false", async () => {
     const title = "新建测试todo";
     const todo = await createTodo({
       title,
+      userId: testUserId,
     });
 
     expect(todo.title).toBe(title);
@@ -188,11 +228,19 @@ describe("createTodo", () => {
 describe("updateTodo", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+
+    const user = await prisma.user.create({
+      data: testUser,
+    });
+
+    testUserId = user.id;
   });
 
   it("updates a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
+        userId: testUserId,
         title: "Old Title",
       },
     });
@@ -200,6 +248,7 @@ describe("updateTodo", () => {
     const updatedTodo = await updateTodo({
       id: todo.id,
       title: "New Title",
+      userId: testUserId,
     });
 
     expect(updatedTodo.title).toBe("New Title");
@@ -209,16 +258,27 @@ describe("updateTodo", () => {
 describe("deleteTodo", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+
+    const user = await prisma.user.create({
+      data: testUser,
+    });
+
+    testUserId = user.id;
   });
 
   it("deletes a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
+        userId: testUserId,
         title: "Todo to delete",
       },
     });
 
-    await deleteTodo(todo.id);
+    await deleteTodo({
+      id: todo.id,
+      userId: testUserId,
+    });
 
     const deletedTodo = await prisma.todo.findUnique({
       where: {

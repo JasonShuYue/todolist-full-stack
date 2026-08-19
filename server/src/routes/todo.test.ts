@@ -4,9 +4,25 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../app.js";
 import { prisma } from "../lib/prisma.js";
 
+const testUser = {
+  email: "test@example.com",
+  passwordHash: "hashed-password",
+};
+
+let testUserId: number;
+
 describe("GET /todos", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+    const user = await prisma.user.create({
+      data: {
+        id: 1,
+        ...testUser,
+      },
+    });
+
+    testUserId = user.id;
   });
 
   it("returns paginated todos", async () => {
@@ -14,12 +30,15 @@ describe("GET /todos", () => {
       data: [
         {
           title: "First todo",
+          userId: testUserId,
         },
         {
           title: "Second todo",
+          userId: testUserId,
         },
         {
           title: "Third todo",
+          userId: testUserId,
         },
       ],
     });
@@ -41,10 +60,12 @@ describe("GET /todos", () => {
         {
           title: "Active todo",
           completed: false,
+          userId: testUserId,
         },
         {
           title: "Completed todo",
           completed: true,
+          userId: testUserId,
         },
       ],
     });
@@ -72,6 +93,15 @@ describe("GET /todos", () => {
 describe("POST /todos", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+    const user = await prisma.user.create({
+      data: {
+        id: 1,
+        ...testUser,
+      },
+    });
+
+    testUserId = user.id;
   });
 
   it("creates a todo", async () => {
@@ -105,6 +135,15 @@ describe("POST /todos", () => {
 describe("PATCH /todos/:id", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+    const user = await prisma.user.create({
+      data: {
+        id: 1,
+        ...testUser,
+      },
+    });
+
+    testUserId = user.id;
   });
 
   it("updates a todo", async () => {
@@ -112,6 +151,7 @@ describe("PATCH /todos/:id", () => {
       data: {
         title: "Old title",
         completed: false,
+        userId: testUserId,
       },
     });
 
@@ -146,6 +186,7 @@ describe("PATCH /todos/:id", () => {
     const todo = await prisma.todo.create({
       data: {
         title: "Old title",
+        userId: testUserId,
       },
     });
 
@@ -178,12 +219,22 @@ describe("PATCH /todos/:id", () => {
 describe("DELETE /todos/:id", () => {
   beforeEach(async () => {
     await prisma.todo.deleteMany();
+    await prisma.user.deleteMany();
+    const user = await prisma.user.create({
+      data: {
+        id: 1,
+        ...testUser,
+      },
+    });
+
+    testUserId = user.id;
   });
 
   it("deletes a todo", async () => {
     const todo = await prisma.todo.create({
       data: {
         title: "Todo to delete",
+        userId: testUserId,
       },
     });
 

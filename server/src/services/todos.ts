@@ -7,21 +7,33 @@ import {
   updateTodoBodySchema,
 } from "../schemas/todos.js";
 
-type ListTodosInput = z.infer<typeof getTodosQuerySchema>;
+type ListTodosInput = z.infer<typeof getTodosQuerySchema> & {
+  userId: number;
+};
 
-type CreateTodoInput = z.infer<typeof createTodoBodySchema>;
+type CreateTodoInput = z.infer<typeof createTodoBodySchema> & {
+  userId: number;
+};
 
 type UpdateTodoInput = z.infer<typeof updateTodoBodySchema> & {
   id: number;
+  userId: number;
+};
+
+type DeleteTodoInput = {
+  id: number;
+  userId: number;
 };
 
 export async function listTodos({
+  userId,
   status,
   search,
   page,
   pageSize,
 }: ListTodosInput) {
   const where = {
+    userId,
     ...(status === "active" ? { completed: false } : {}),
     ...(status === "completed" ? { completed: true } : {}),
     ...(search.length > 0
@@ -60,15 +72,21 @@ export async function listTodos({
   };
 }
 
-export async function createTodo({ title }: CreateTodoInput) {
+export async function createTodo({ title, userId }: CreateTodoInput) {
   return prisma.todo.create({
     data: {
       title,
+      userId,
     },
   });
 }
 
-export async function updateTodo({ id, title, completed }: UpdateTodoInput) {
+export async function updateTodo({
+  id,
+  userId: _userId,
+  title,
+  completed,
+}: UpdateTodoInput) {
   return prisma.todo.update({
     where: {
       id,
@@ -80,7 +98,7 @@ export async function updateTodo({ id, title, completed }: UpdateTodoInput) {
   });
 }
 
-export async function deleteTodo(id: number) {
+export async function deleteTodo({ id, userId: _userId }: DeleteTodoInput) {
   await prisma.todo.delete({
     where: {
       id,
