@@ -5,7 +5,8 @@ type ErrorCode =
   | "INVALID_BODY"
   | "INVALID_PARAMS"
   | "TODO_NOT_FOUND"
-  | "INTERNAL_SERVER_ERROR";
+  | "INTERNAL_SERVER_ERROR"
+  | "CONFLICT";
 
 function errorResponse(
   response: Response,
@@ -38,4 +39,8 @@ export function internalServerError(response: Response) {
     "INTERNAL_SERVER_ERROR",
     "Internal server error",
   );
+}
+
+export function conflict(response: Response, code: ErrorCode, message: string) {
+  errorResponse(response, 409, code, message)
 }
