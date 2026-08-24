@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import { todosRouter } from "./routes/todos.js";
 import { authRouter } from "./routes/auth.js";
+import { requestLogger } from "./middleware/requestLogger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,8 @@ const clientDistPath = path.resolve(__dirname, "../../client/dist");
 export const app = express(); // 初始化实例
 
 app.use(cors()); // 跨域中间件
+
+app.use(requestLogger);
 
 app.use(express.json()); // 解析 JSON 格式
 
