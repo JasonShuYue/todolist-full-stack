@@ -41,6 +41,13 @@
   background: #f2f4f7;
 }
 
+.auth-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #667085;
+}
+
 .auth-form {
   display: grid;
   gap: 12px;

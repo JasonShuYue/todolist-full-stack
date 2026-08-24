@@ -1,22 +1,29 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-
 import "./App.css";
-import { login, register } from "./api/auth";
-import { clearAuthToken, getAuthToken } from "./api/todos";
+import { AuthForm } from "./components/AuthForm";
 import { TodoForm } from "./components/TodoForm";
 import { TodoList } from "./components/TodoList";
+import { TodoPagination } from "./components/TodoPagination";
+import { TodoToolbar } from "./components/TodoToolbar";
+import { useAuth } from "./hooks/useAuth";
 import { useTodos } from "./hooks/useTodos";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => getAuthToken() !== null,
-  );
-  const [email, setEmail] = useState("test@example.com");
-  const [password, setPassword] = useState("password123");
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authError, setAuthError] = useState("");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const {
+    authError,
+    authMode,
+    currentUser,
+    email,
+    isAuthenticated,
+    isLoggingIn,
+    password,
+    handleAuthSubmit,
+    handleLogout,
+    handleUnauthorized,
+    setEmail,
+    setPassword,
+    toggleAuthMode,
+  } = useAuth();
+
   const {
     todos,
     title,
@@ -37,38 +44,10 @@ function App() {
     handleToggleTodo,
     handleUpdateTodoTitle,
     handleDeleteTodo,
-  } = useTodos({ enabled: isAuthenticated });
-
-  async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (isLoggingIn) {
-      return;
-    }
-
-    setIsLoggingIn(true);
-    setAuthError("");
-
-    try {
-      if (authMode === "register") {
-        await register(email, password);
-      }
-
-      await login(email, password);
-      setIsAuthenticated(true);
-    } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Authentication failed",
-      );
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }
-
-  function handleLogout() {
-    clearAuthToken();
-    setIsAuthenticated(false);
-  }
+  } = useTodos({
+    enabled: isAuthenticated,
+    onUnauthorized: handleUnauthorized,
+  });
 
   if (!isAuthenticated) {
     return (
@@ -76,51 +55,17 @@ function App() {
         <section className="todo-panel">
           <h1>Todos</h1>
 
-          <form
-            className="auth-form"
+          <AuthForm
+            authError={authError}
+            authMode={authMode}
+            email={email}
+            isSubmitting={isLoggingIn}
+            password={password}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
             onSubmit={(event) => void handleAuthSubmit(event)}
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Email"
-              disabled={isLoggingIn}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              disabled={isLoggingIn}
-            />
-            <button type="submit" disabled={isLoggingIn}>
-              {isLoggingIn
-                ? authMode === "login"
-                  ? "Logging in..."
-                  : "Creating account..."
-                : authMode === "login"
-                  ? "Log in"
-                  : "Create account"}
-            </button>
-          </form>
-
-          <button
-            type="button"
-            className="auth-mode-button"
-            onClick={() => {
-              setAuthError("");
-              setAuthMode((currentMode) =>
-                currentMode === "login" ? "register" : "login",
-              );
-            }}
-          >
-            {authMode === "login"
-              ? "Create a new account"
-              : "Log in with an existing account"}
-          </button>
-
-          {authError && <p className="error-message">{authError}</p>}
+            onToggleMode={toggleAuthMode}
+          />
         </section>
       </main>
     );
@@ -131,9 +76,12 @@ function App() {
       <section className="todo-panel">
         <div className="todo-header">
           <h1>Todos</h1>
-          <button type="button" onClick={handleLogout}>
-            Log out
-          </button>
+          <div className="auth-summary">
+            {currentUser && <span>{currentUser.email}</span>}
+            <button type="button" onClick={handleLogout}>
+              Log out
+            </button>
+          </div>
         </div>
 
         <TodoForm
@@ -143,42 +91,12 @@ function App() {
           onSubmit={handleCreateTodo}
         />
 
-        <div className="todo-filters">
-          <button
-            type="button"
-            className={filter === "all" ? "active" : ""}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            className={filter === "active" ? "active" : ""}
-            onClick={() => setFilter("active")}
-          >
-            Active
-          </button>
-          <button
-            type="button"
-            className={filter === "completed" ? "active" : ""}
-            onClick={() => setFilter("completed")}
-          >
-            Completed
-          </button>
-        </div>
-
-        <div className="todo-search">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search todos"
-          />
-          {search.trim().length > 0 && (
-            <button type="button" onClick={() => setSearch("")}>
-              Clear
-            </button>
-          )}
-        </div>
+        <TodoToolbar
+          filter={filter}
+          search={search}
+          onFilterChange={setFilter}
+          onSearchChange={setSearch}
+        />
 
         {errorMessage && <p className="error-message">{errorMessage}</p>}
 
@@ -196,29 +114,12 @@ function App() {
           />
         )}
 
-        {totalPages > 1 && (
-          <div className="todo-pagination">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((currentPage) => currentPage - 1)}
-            >
-              Previous
-            </button>
-
-            <span>
-              Page {page} of {totalPages} · {total} total
-            </span>
-
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((currentPage) => currentPage + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        <TodoPagination
+          page={page}
+          total={total}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </section>
     </main>
   );

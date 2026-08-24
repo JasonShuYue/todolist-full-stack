@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { ApiError } from "../api/errors";
 import {
-  ApiError,
   createTodo,
   deleteTodo,
   fetchTodos,
@@ -42,7 +42,17 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
-export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
+function isUnauthorizedError(error: unknown) {
+  return error instanceof ApiError && error.code === "UNAUTHORIZED";
+}
+
+export function useTodos({
+  enabled = true,
+  onUnauthorized,
+}: {
+  enabled?: boolean;
+  onUnauthorized?: () => void;
+} = {}) {
   const hasCompletedInitialSearchSync = useRef(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
@@ -62,6 +72,15 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
   const [busyTodoId, setBusyTodoId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  function handleApiError(error: unknown, fallbackMessage: string) {
+    if (isUnauthorizedError(error)) {
+      onUnauthorized?.();
+      return;
+    }
+
+    setErrorMessage(getErrorMessage(error, fallbackMessage));
+  }
+
   async function loadTodos(
     status: TodoFilter,
     searchTerm: string,
@@ -77,7 +96,7 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
       setTotalPages(data.totalPages);
       setPage(data.page);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Failed to load todos"));
+      handleApiError(error, "Failed to load todos");
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +124,7 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
       setTitle("");
       setErrorMessage("");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Failed to create todo"));
+      handleApiError(error, "Failed to create todo");
     } finally {
       setIsCreating(false);
     }
@@ -162,8 +181,13 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
 
       setErrorMessage("");
     } catch (error) {
+      if (isUnauthorizedError(error)) {
+        handleApiError(error, "Failed to update todo");
+        return;
+      }
+
       await loadTodos(filter, debouncedSearch, page);
-      setErrorMessage(getErrorMessage(error, "Failed to update todo"));
+      handleApiError(error, "Failed to update todo");
     } finally {
       setBusyTodoId(null);
     }
@@ -198,7 +222,7 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
       }
       setErrorMessage("");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Failed to update todo"));
+      handleApiError(error, "Failed to update todo");
     } finally {
       setBusyTodoId(null);
     }
@@ -230,7 +254,7 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
 
       setErrorMessage("");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Failed to delete todo"));
+      handleApiError(error, "Failed to delete todo");
     } finally {
       setBusyTodoId(null);
     }
@@ -259,7 +283,7 @@ export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
     }
 
     void loadTodos(filter, debouncedSearch, page);
-  }, [enabled, filter, debouncedSearch, page]);
+  }, [enabled, filter, debouncedSearch, page, onUnauthorized]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams();

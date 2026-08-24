@@ -1,3 +1,5 @@
+import { assertOk } from "./errors";
+
 export type Todo = {
   id: number;
   title: string;
@@ -14,11 +16,6 @@ export type TodosPage = {
   page: number;
   pageSize: number;
   totalPages: number;
-};
-
-type ApiErrorBody = {
-  code?: unknown;
-  message?: unknown;
 };
 
 const AUTH_TOKEN_KEY = "todo_auth_token";
@@ -45,40 +42,6 @@ function createAuthHeaders(): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
   };
-}
-
-export class ApiError extends Error {
-  code: string;
-
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = "ApiError";
-    this.code = code;
-  }
-}
-
-async function assertOk(response: Response, fallbackMessage: string) {
-  if (response.ok) {
-    return;
-  }
-
-  try {
-    const errorBody = (await response.json()) as ApiErrorBody;
-    const code =
-      typeof errorBody.code === "string" ? errorBody.code : "UNKNOWN_ERROR";
-    const message =
-      typeof errorBody.message === "string"
-        ? errorBody.message
-        : fallbackMessage;
-
-    throw new ApiError(code, message);
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    throw new ApiError("UNKNOWN_ERROR", fallbackMessage);
-  }
 }
 
 export async function fetchTodos(
