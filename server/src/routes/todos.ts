@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { isTodoNotFoundError } from "../lib/errors.js";
 import { badRequest, internalServerError, notFound } from "../lib/http.js";
+import { logError } from "../lib/logger.js";
 import { isRecordNotFoundError } from "../lib/prisma.js";
 import { parseWithSchema } from "../lib/validation.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -112,6 +113,7 @@ todosRouter.patch("/:id", async (request, response) => {
       return;
     }
 
+    logError("Failed to update todo", error);
     internalServerError(response);
   }
 });
@@ -140,6 +142,7 @@ todosRouter.delete("/:id", async (request, response) => {
       return;
     }
 
+    logError("Failed to delete todo", error);
     internalServerError(response);
   }
 });

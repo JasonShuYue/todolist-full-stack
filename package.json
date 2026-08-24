@@ -7,9 +7,10 @@
       "dev": "pnpm -r --parallel dev",
       "dev:server": "pnpm --filter server dev",
       "dev:client": "pnpm --filter client dev",
+      "check": "pnpm test && pnpm build",
       "build": "pnpm -r build",
       "start": "NODE_ENV=production pnpm --filter server start",
-      "deploy:local": "pnpm build && cd server && NODE_ENV=production pnpm start",
+      "deploy:local": "pnpm build && cd server && pnpm db:deploy && NODE_ENV=production pnpm start",
       "test": "pnpm -r test",
       "lint": "pnpm -r lint"
     },

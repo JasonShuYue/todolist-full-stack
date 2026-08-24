@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Prisma } from "@prisma/client";
 
 import { badRequest, internalServerError, conflict } from "../lib/http.js";
+import { logError } from "../lib/logger.js";
 import { parseWithSchema } from "../lib/validation.js";
 import { loginBodySchema, registerBodySchema } from "../schemas/auth.js";
 import { loginUser, registerUser } from "../services/auth.js";
@@ -27,6 +28,8 @@ authRouter.post("/register", async (request, response) => {
       conflict(response, "CONFLICT", "Email already exists");
       return;
     }
+
+    logError("Failed to register user", error);
     internalServerError(response);
   }
 });
@@ -48,7 +51,8 @@ authRouter.post("/login", async (request, response) => {
     }
 
     response.json(user);
-  } catch {
+  } catch (error) {
+    logError("Failed to login user", error);
     internalServerError(response);
   }
 });
