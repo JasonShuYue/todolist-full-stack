@@ -8,7 +8,7 @@ type RegisterInput = z.infer<typeof registerBodySchema>;
 type LoginInput = z.infer<typeof loginBodySchema>;
 
 export async function registerUser({ email, password }: RegisterInput) {
-  const passwordHash = await bcrypt.hash(password, 10); // 10 是 sault
+  const passwordHash = await bcrypt.hash(password, 10); // 10 是 salt
 
   const user = await prisma.user.create({
     data: {
