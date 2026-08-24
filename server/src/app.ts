@@ -11,9 +11,9 @@ app.use(cors()); // 跨域中间件
 
 app.use(express.json()); // 解析 JSON 格式
 
-app.use("/todos", todosRouter);
+app.use("/api/todos", todosRouter);
 
-app.use("/auth", authRouter);
+app.use("/api/auth", authRouter);
 
 app.get("/health", (_request, response) => {
   response.json({

@@ -8,14 +8,14 @@ let testUserId: number;
 let authToken: string;
 
 async function createTestUser() {
-  const registerResponse = await request(app).post("/auth/register").send({
+  const registerResponse = await request(app).post("/api/auth/register").send({
     email: "test@example.com",
     password: "password123",
   });
 
   testUserId = registerResponse.body.id;
 
-  const loginResponse = await request(app).post("/auth/login").send({
+  const loginResponse = await request(app).post("/api/auth/login").send({
     email: "test@example.com",
     password: "password123",
   });
@@ -53,7 +53,7 @@ describe("GET /todos", () => {
     });
 
     const response = await auth(
-      request(app).get("/todos?page=1&pageSize=2"),
+      request(app).get("/api/todos?page=1&pageSize=2"),
     ).expect(200);
 
     expect(response.body.items).toHaveLength(2);
@@ -80,7 +80,7 @@ describe("GET /todos", () => {
     });
 
     const response = await auth(
-      request(app).get("/todos?status=active"),
+      request(app).get("/api/todos?status=active"),
     ).expect(200);
 
     expect(response.body.items).toHaveLength(1);
@@ -91,7 +91,7 @@ describe("GET /todos", () => {
 
   it("returns 400 when status is invalid", async () => {
     const response = await request(app)
-      .get("/todos?status=invalid")
+      .get("/api/todos?status=invalid")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(400);
 
@@ -111,7 +111,7 @@ describe("POST /todos", () => {
 
   it("creates a todo", async () => {
     const response = await request(app)
-      .post("/todos")
+      .post("/api/todos")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Learn route tests",
@@ -125,7 +125,7 @@ describe("POST /todos", () => {
 
   it("returns 400 when title is empty", async () => {
     const response = await request(app)
-      .post("/todos")
+      .post("/api/todos")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "",
@@ -156,7 +156,7 @@ describe("PATCH /todos/:id", () => {
     });
 
     const response = await request(app)
-      .patch(`/todos/${todo.id}`)
+      .patch(`/api/todos/${todo.id}`)
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "New title",
@@ -171,7 +171,7 @@ describe("PATCH /todos/:id", () => {
 
   it("returns 400 when id is invalid", async () => {
     const response = await request(app)
-      .patch("/todos/abc")
+      .patch("/api/todos/abc")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "New title",
@@ -193,7 +193,7 @@ describe("PATCH /todos/:id", () => {
     });
 
     const response = await request(app)
-      .patch(`/todos/${todo.id}`)
+      .patch(`/api/todos/${todo.id}`)
       .set("Authorization", `Bearer ${authToken}`)
       .send({})
       .expect(400);
@@ -206,7 +206,7 @@ describe("PATCH /todos/:id", () => {
 
   it("returns 404 when todo does not exist", async () => {
     const response = await request(app)
-      .patch("/todos/999999")
+      .patch("/api/todos/999999")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "New title",
@@ -236,7 +236,7 @@ describe("DELETE /todos/:id", () => {
     });
 
     await request(app)
-      .delete(`/todos/${todo.id}`)
+      .delete(`/api/todos/${todo.id}`)
       .set("Authorization", `Bearer ${authToken}`)
       .expect(204);
 
@@ -251,7 +251,7 @@ describe("DELETE /todos/:id", () => {
 
   it("returns 400 when id is invalid", async () => {
     const response = await request(app)
-      .delete("/todos/abc")
+      .delete("/api/todos/abc")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(400);
 
@@ -263,7 +263,7 @@ describe("DELETE /todos/:id", () => {
 
   it("returns 404 when todo does not exist", async () => {
     const response = await request(app)
-      .delete("/todos/999999")
+      .delete("/api/todos/999999")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(404);
 
@@ -276,7 +276,7 @@ describe("DELETE /todos/:id", () => {
 
 describe("todos auth", () => {
   it("returns 401 when token is missing", async () => {
-    const response = await request(app).get("/todos").expect(401);
+    const response = await request(app).get("/api/todos").expect(401);
 
     expect(response.body).toEqual({
       code: "UNAUTHORIZED",
@@ -286,7 +286,7 @@ describe("todos auth", () => {
 
   it("returns 401 when token is invalid", async () => {
     const response = await request(app)
-      .get("/todos")
+      .get("/api/todos")
       .set("Authorization", "Bearer invalid-token")
       .expect(401);
 

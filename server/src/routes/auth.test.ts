@@ -13,7 +13,7 @@ describe("POST /auth/register", () => {
 
   it("register a user", async () => {
     const response = await request(app)
-      .post("/auth/register")
+      .post("/api/auth/register")
       .send({
         email: "test@example.com",
         password: "password123",
@@ -34,7 +34,7 @@ describe("POST /auth/register", () => {
     });
 
     const response = await request(app)
-      .post("/auth/register")
+      .post("/api/auth/register")
       .send({
         email: "test@example.com",
         password: "password456",
@@ -61,7 +61,7 @@ describe("POST /auth/login", () => {
     });
 
     const response = await request(app)
-      .post("/auth/login")
+      .post("/api/auth/login")
       .send({
         email: "test@example.com",
         password: "password123",
@@ -83,7 +83,7 @@ describe("POST /auth/login", () => {
     });
 
     const response = await request(app)
-      .post("/auth/login")
+      .post("/api/auth/login")
       .send({
         email: "test@example.com",
         password: "wrong-password",
@@ -98,7 +98,7 @@ describe("POST /auth/login", () => {
 
   it("returns 400 when user does not exist", async () => {
     const response = await request(app)
-      .post("/auth/login")
+      .post("/api/auth/login")
       .send({
         email: "missing@example.com",
         password: "password123",
