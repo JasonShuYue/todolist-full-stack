@@ -113,7 +113,9 @@ todosRouter.patch("/:id", async (request, response) => {
       return;
     }
 
-    logError("Failed to update todo", error);
+    logError("Failed to update todo", error, {
+      requestId: request.requestId,
+    });
     internalServerError(response);
   }
 });
@@ -142,7 +144,9 @@ todosRouter.delete("/:id", async (request, response) => {
       return;
     }
 
-    logError("Failed to delete todo", error);
+    logError("Failed to delete todo", error, {
+      requestId: request.requestId,
+    });
     internalServerError(response);
   }
 });

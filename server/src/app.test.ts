@@ -13,4 +13,15 @@ describe("app", () => {
       service: "todolist-server",
     });
   });
+
+  it("returns readiness status", async () => {
+    const response = await request(app).get("/health/ready");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      ok: true,
+      service: "todolist-server",
+      database: "ok",
+    });
+  });
 });

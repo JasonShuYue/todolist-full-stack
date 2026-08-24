@@ -1,10 +1,12 @@
 export class ApiError extends Error {
   code: string;
+  requestId?: string;
 
-  constructor(code: string, message: string) {
+  constructor(code: string, message: string, requestId?: string) {
     super(message);
     this.name = "ApiError";
     this.code = code;
+    this.requestId = requestId;
   }
 }
 
@@ -18,6 +20,8 @@ export async function assertOk(response: Response, fallbackMessage: string) {
     return;
   }
 
+  const requestId = response.headers.get("X-Request-Id") ?? undefined;
+
   try {
     const errorBody = (await response.json()) as ApiErrorBody;
     const code =
@@ -27,12 +31,12 @@ export async function assertOk(response: Response, fallbackMessage: string) {
         ? errorBody.message
         : fallbackMessage;
 
-    throw new ApiError(code, message);
+    throw new ApiError(code, message, requestId);
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
 
-    throw new ApiError("UNKNOWN_ERROR", fallbackMessage);
+    throw new ApiError("UNKNOWN_ERROR", fallbackMessage, requestId);
   }
 }

@@ -29,7 +29,9 @@ authRouter.post("/register", async (request, response) => {
       return;
     }
 
-    logError("Failed to register user", error);
+    logError("Failed to register user", error, {
+      requestId: request.requestId,
+    });
     internalServerError(response);
   }
 });
@@ -52,7 +54,9 @@ authRouter.post("/login", async (request, response) => {
 
     response.json(user);
   } catch (error) {
-    logError("Failed to login user", error);
+    logError("Failed to login user", error, {
+      requestId: request.requestId,
+    });
     internalServerError(response);
   }
 });

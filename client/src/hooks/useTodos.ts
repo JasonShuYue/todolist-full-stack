@@ -36,6 +36,14 @@ export function getInitialPage() {
 
 function getErrorMessage(error: unknown, fallbackMessage: string) {
   if (error instanceof ApiError) {
+    if (error.requestId !== undefined) {
+      console.error("API error", {
+        code: error.code,
+        message: error.message,
+        requestId: error.requestId,
+      });
+    }
+
     return error.message;
   }
 

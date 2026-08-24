@@ -7,6 +7,7 @@ import {
   login,
   register,
 } from "../api/auth";
+import { ApiError } from "../api/errors";
 import { clearAuthToken, getAuthToken } from "../api/todos";
 
 const initialAuthToken = getAuthToken();
@@ -49,6 +50,14 @@ export function useAuth() {
       setCurrentUser(user);
       setIsAuthenticated(true);
     } catch (error) {
+      if (error instanceof ApiError && error.requestId !== undefined) {
+        console.error("API error", {
+          code: error.code,
+          message: error.message,
+          requestId: error.requestId,
+        });
+      }
+
       setAuthError(
         error instanceof Error ? error.message : "Authentication failed",
       );

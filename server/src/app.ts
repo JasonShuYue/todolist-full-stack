@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { todosRouter } from "./routes/todos.js";
 import { authRouter } from "./routes/auth.js";
+import { logError } from "./lib/logger.js";
+import { prisma } from "./lib/prisma.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +31,28 @@ app.get("/health", (_request, response) => {
     ok: true,
     service: "todolist-server",
   });
+});
+
+app.get("/health/ready", async (request, response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+
+    response.json({
+      ok: true,
+      service: "todolist-server",
+      database: "ok",
+    });
+  } catch (error) {
+    logError("Readiness check failed", error, {
+      requestId: request.requestId,
+    });
+
+    response.status(503).json({
+      ok: false,
+      service: "todolist-server",
+      database: "error",
+    });
+  }
 });
 
 if (process.env.NODE_ENV === "production") {
