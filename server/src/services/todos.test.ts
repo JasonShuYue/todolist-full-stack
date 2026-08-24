@@ -253,6 +253,38 @@ describe("updateTodo", () => {
 
     expect(updatedTodo.title).toBe("New Title");
   });
+
+  it("does not update another user's todo", async () => {
+    const otherUser = await prisma.user.create({
+      data: {
+        email: "other@example.com",
+        passwordHash: "hashed-password",
+      },
+    });
+
+    const otherTodo = await prisma.todo.create({
+      data: {
+        title: "Other user's todo",
+        userId: otherUser.id,
+      },
+    });
+
+    await expect(
+      updateTodo({
+        id: otherTodo.id,
+        userId: testUserId,
+        title: "Hacked title",
+      }),
+    ).rejects.toThrow("Todo not found");
+
+    const unchangedTodo = await prisma.todo.findUnique({
+      where: {
+        id: otherTodo.id,
+      },
+    });
+
+    expect(unchangedTodo?.title).toBe("Other user's todo");
+  });
 });
 
 describe("deleteTodo", () => {
@@ -287,6 +319,37 @@ describe("deleteTodo", () => {
     });
 
     expect(deletedTodo).toBeNull();
+  });
+
+  it("does not delete another user's todo", async () => {
+    const otherUser = await prisma.user.create({
+      data: {
+        email: "other@example.com",
+        passwordHash: "hashed-password",
+      },
+    });
+
+    const otherTodo = await prisma.todo.create({
+      data: {
+        title: "Other user's todo",
+        userId: otherUser.id,
+      },
+    });
+
+    await expect(
+      deleteTodo({
+        id: otherTodo.id,
+        userId: testUserId,
+      }),
+    ).rejects.toThrow("Todo not found");
+
+    const existingTodo = await prisma.todo.findUnique({
+      where: {
+        id: otherTodo.id,
+      },
+    });
+
+    expect(existingTodo).not.toBeNull();
   });
 });
 

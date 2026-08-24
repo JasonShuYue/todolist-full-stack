@@ -6,6 +6,7 @@ import {
   getTodosQuerySchema,
   updateTodoBodySchema,
 } from "../schemas/todos.js";
+import { TodoNotFoundError } from "../lib/errors.js";
 
 type ListTodosInput = z.infer<typeof getTodosQuerySchema> & {
   userId: number;
@@ -83,25 +84,42 @@ export async function createTodo({ title, userId }: CreateTodoInput) {
 
 export async function updateTodo({
   id,
-  userId: _userId,
+  userId,
   title,
   completed,
 }: UpdateTodoInput) {
-  return prisma.todo.update({
+  const result = await prisma.todo.updateMany({
     where: {
       id,
+      userId,
     },
     data: {
       ...(title !== undefined ? { title } : {}),
       ...(completed !== undefined ? { completed } : {}),
     },
   });
-}
 
-export async function deleteTodo({ id, userId: _userId }: DeleteTodoInput) {
-  await prisma.todo.delete({
+  if (result.count === 0) {
+    throw new TodoNotFoundError();
+  }
+
+  // 因为 updateMany 返回的不是更新后的 todo，updateMany只返回更新了几条，所以这里再查一次
+  return prisma.todo.findUniqueOrThrow({
     where: {
       id,
     },
   });
+}
+
+export async function deleteTodo({ id, userId }: DeleteTodoInput) {
+  const result = await prisma.todo.deleteMany({
+    where: {
+      id,
+      userId,
+    },
+  });
+
+  if (result.count === 0) {
+    throw new TodoNotFoundError();
+  }
 }

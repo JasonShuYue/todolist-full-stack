@@ -6,7 +6,8 @@ type ErrorCode =
   | "INVALID_PARAMS"
   | "TODO_NOT_FOUND"
   | "INTERNAL_SERVER_ERROR"
-  | "CONFLICT";
+  | "CONFLICT"
+  | "UNAUTHORIZED";
 
 function errorResponse(
   response: Response,
@@ -18,6 +19,10 @@ function errorResponse(
     code,
     message,
   });
+}
+
+export function unauthorized(response: Response, message: string) {
+  errorResponse(response, 401, "UNAUTHORIZED", message);
 }
 
 export function badRequest(
@@ -42,5 +47,5 @@ export function internalServerError(response: Response) {
 }
 
 export function conflict(response: Response, code: ErrorCode, message: string) {
-  errorResponse(response, 409, code, message)
+  errorResponse(response, 409, code, message);
 }

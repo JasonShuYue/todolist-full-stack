@@ -21,6 +21,32 @@ type ApiErrorBody = {
   message?: unknown;
 };
 
+const AUTH_TOKEN_KEY = "todo_auth_token";
+
+export function getAuthToken() {
+  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setAuthToken(token: string) {
+  window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+function createAuthHeaders(): Record<string, string> {
+  const token = getAuthToken();
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 export class ApiError extends Error {
   code: string;
 
@@ -73,7 +99,9 @@ export async function fetchTodos(
     searchParams.set("search", trimmedSearch);
   }
 
-  const response = await fetch(`/api/todos?${searchParams.toString()}`);
+  const response = await fetch(`/api/todos?${searchParams.toString()}`, {
+    headers: createAuthHeaders(),
+  });
 
   await assertOk(response, "Failed to load todos");
 
@@ -85,6 +113,7 @@ export async function createTodo(title: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...createAuthHeaders(),
     },
     body: JSON.stringify({
       title,
@@ -107,6 +136,7 @@ export async function updateTodo(
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...createAuthHeaders(),
     },
     body: JSON.stringify(data),
   });
@@ -119,6 +149,7 @@ export async function updateTodo(
 export async function deleteTodo(todoId: number) {
   const response = await fetch(`/api/todos/${todoId}`, {
     method: "DELETE",
+    headers: createAuthHeaders(),
   });
 
   await assertOk(response, "Failed to delete todo");

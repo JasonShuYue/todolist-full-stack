@@ -3,6 +3,7 @@ import type { z } from "zod";
 
 import { prisma } from "../lib/prisma.js";
 import type { loginBodySchema, registerBodySchema } from "../schemas/auth.js";
+import { signToken } from "../lib/jwt.js";
 
 type RegisterInput = z.infer<typeof registerBodySchema>;
 type LoginInput = z.infer<typeof loginBodySchema>;
@@ -44,9 +45,12 @@ export async function loginUser({ email, password }: LoginInput) {
   }
 
   return {
-    id: user.id,
-    email: user.email,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    user: {
+      id: user.id,
+      email: user.email,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+    token: signToken(user.id),
   };
 }

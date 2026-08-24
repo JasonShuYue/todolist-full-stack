@@ -68,11 +68,12 @@ describe("POST /auth/login", () => {
       })
       .expect(200);
 
-    expect(response.body.id).toEqual(expect.any(Number));
-    expect(response.body.email).toBe("test@example.com");
-    expect(response.body.createdAt).toEqual(expect.any(String));
-    expect(response.body.updatedAt).toEqual(expect.any(String));
-    expect(response.body.passwordHash).toBeUndefined();
+    expect(response.body.user.id).toEqual(expect.any(Number));
+    expect(response.body.user.email).toBe("test@example.com");
+    expect(response.body.user.createdAt).toEqual(expect.any(String));
+    expect(response.body.user.updatedAt).toEqual(expect.any(String));
+    expect(response.body.user.passwordHash).toBeUndefined();
+    expect(response.body.token).toEqual(expect.any(String));
   });
 
   it("returns 400 when password is wrong", async () => {

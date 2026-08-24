@@ -1,8 +1,10 @@
 import { Router } from "express";
 
+import { isTodoNotFoundError } from "../lib/errors.js";
 import { badRequest, internalServerError, notFound } from "../lib/http.js";
 import { isRecordNotFoundError } from "../lib/prisma.js";
 import { parseWithSchema } from "../lib/validation.js";
+import { requireAuth } from "../middleware/auth.js";
 import {
   createTodoBodySchema,
   getTodosQuerySchema,
@@ -18,10 +20,19 @@ import {
 
 export const todosRouter = Router();
 
-const demoUserId = 1;
+todosRouter.use(requireAuth);
+
+function getAuthenticatedUserId(request: { userId?: number }) {
+  if (request.userId === undefined) {
+    throw new Error("Authenticated request is missing userId");
+  }
+
+  return request.userId;
+}
 
 todosRouter.get("/", async (request, response) => {
   const parseResult = parseWithSchema(getTodosQuerySchema, request.query);
+  const userId = getAuthenticatedUserId(request);
 
   if (!parseResult.success) {
     badRequest(response, "INVALID_QUERY", "Invalid query");
@@ -36,7 +47,7 @@ todosRouter.get("/", async (request, response) => {
   } = parseResult.data;
 
   const result = await listTodos({
-    userId: demoUserId,
+    userId,
     status,
     search,
     page: pageNumber,
@@ -48,6 +59,7 @@ todosRouter.get("/", async (request, response) => {
 
 todosRouter.post("/", async (request, response) => {
   const parseResult = parseWithSchema(createTodoBodySchema, request.body);
+  const userId = getAuthenticatedUserId(request);
 
   if (!parseResult.success) {
     badRequest(response, "INVALID_BODY", "Title is required");
@@ -58,7 +70,7 @@ todosRouter.post("/", async (request, response) => {
 
   const todo = await createTodo({
     title,
-    userId: demoUserId,
+    userId,
   });
 
   response.status(201).json(todo);
@@ -66,6 +78,7 @@ todosRouter.post("/", async (request, response) => {
 
 todosRouter.patch("/:id", async (request, response) => {
   const parseParamsResult = parseWithSchema(todoParamsSchema, request.params);
+  const userId = getAuthenticatedUserId(request);
 
   if (!parseParamsResult.success) {
     badRequest(response, "INVALID_PARAMS", "Invalid todo id");
@@ -87,14 +100,14 @@ todosRouter.patch("/:id", async (request, response) => {
   try {
     const todo = await updateTodo({
       id,
-      userId: demoUserId,
+      userId,
       title,
       completed,
     });
 
     response.json(todo);
   } catch (error) {
-    if (isRecordNotFoundError(error)) {
+    if (isRecordNotFoundError(error) || isTodoNotFoundError(error)) {
       notFound(response, "TODO_NOT_FOUND", "Todo not found");
       return;
     }
@@ -105,6 +118,7 @@ todosRouter.patch("/:id", async (request, response) => {
 
 todosRouter.delete("/:id", async (request, response) => {
   const parseParamsResult = parseWithSchema(todoParamsSchema, request.params);
+  const userId = getAuthenticatedUserId(request);
 
   if (!parseParamsResult.success) {
     badRequest(response, "INVALID_PARAMS", "Invalid todo id");
@@ -116,12 +130,12 @@ todosRouter.delete("/:id", async (request, response) => {
   try {
     await deleteTodo({
       id,
-      userId: demoUserId,
+      userId,
     });
 
     response.status(204).send();
   } catch (error) {
-    if (isRecordNotFoundError(error)) {
+    if (isRecordNotFoundError(error) || isTodoNotFoundError(error)) {
       notFound(response, "TODO_NOT_FOUND", "Todo not found");
       return;
     }
