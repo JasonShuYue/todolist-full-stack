@@ -1,15 +1,15 @@
 import { Router } from "express";
 import { Prisma } from "@prisma/client";
 
-import { badRequest, internalServerError, conflict } from "../lib/http.js";
-import { logError } from "../lib/logger.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
+import { badRequest, conflict } from "../lib/http.js";
 import { parseWithSchema } from "../lib/validation.js";
 import { loginBodySchema, registerBodySchema } from "../schemas/auth.js";
 import { loginUser, registerUser } from "../services/auth.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (request, response) => {
+authRouter.post("/register", asyncHandler(async (request, response) => {
   const parseResult = parseWithSchema(registerBodySchema, request.body);
 
   if (!parseResult.success) {
@@ -29,14 +29,11 @@ authRouter.post("/register", async (request, response) => {
       return;
     }
 
-    logError("Failed to register user", error, {
-      requestId: request.requestId,
-    });
-    internalServerError(response);
+    throw error;
   }
-});
+}, "Failed to register user"));
 
-authRouter.post("/login", async (request, response) => {
+authRouter.post("/login", asyncHandler(async (request, response) => {
   const parseResult = parseWithSchema(loginBodySchema, request.body);
 
   if (!parseResult.success) {
@@ -44,19 +41,12 @@ authRouter.post("/login", async (request, response) => {
     return;
   }
 
-  try {
-    const user = await loginUser(parseResult.data);
+  const user = await loginUser(parseResult.data);
 
-    if (!user) {
-      badRequest(response, "INVALID_BODY", "Invalid email or password");
-      return;
-    }
-
-    response.json(user);
-  } catch (error) {
-    logError("Failed to login user", error, {
-      requestId: request.requestId,
-    });
-    internalServerError(response);
+  if (!user) {
+    badRequest(response, "INVALID_BODY", "Invalid email or password");
+    return;
   }
-});
+
+  response.json(user);
+}, "Failed to login user"));
