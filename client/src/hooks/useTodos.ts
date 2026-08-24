@@ -42,7 +42,7 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
-export function useTodos() {
+export function useTodos({ enabled = true }: { enabled?: boolean } = {}) {
   const hasCompletedInitialSearchSync = useRef(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
@@ -253,8 +253,13 @@ export function useTodos() {
   }, [search]);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return;
+    }
+
     void loadTodos(filter, debouncedSearch, page);
-  }, [filter, debouncedSearch, page]);
+  }, [enabled, filter, debouncedSearch, page]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams();

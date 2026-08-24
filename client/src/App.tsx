@@ -1,9 +1,22 @@
+import { useState } from "react";
+import type { FormEvent } from "react";
+
 import "./App.css";
+import { login, register } from "./api/auth";
+import { clearAuthToken, getAuthToken } from "./api/todos";
 import { TodoForm } from "./components/TodoForm";
 import { TodoList } from "./components/TodoList";
 import { useTodos } from "./hooks/useTodos";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => getAuthToken() !== null,
+  );
+  const [email, setEmail] = useState("test@example.com");
+  const [password, setPassword] = useState("password123");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authError, setAuthError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const {
     todos,
     title,
@@ -24,12 +37,104 @@ function App() {
     handleToggleTodo,
     handleUpdateTodoTitle,
     handleDeleteTodo,
-  } = useTodos();
+  } = useTodos({ enabled: isAuthenticated });
+
+  async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isLoggingIn) {
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setAuthError("");
+
+    try {
+      if (authMode === "register") {
+        await register(email, password);
+      }
+
+      await login(email, password);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Authentication failed",
+      );
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+  function handleLogout() {
+    clearAuthToken();
+    setIsAuthenticated(false);
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main className="app">
+        <section className="todo-panel">
+          <h1>Todos</h1>
+
+          <form
+            className="auth-form"
+            onSubmit={(event) => void handleAuthSubmit(event)}
+          >
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Email"
+              disabled={isLoggingIn}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Password"
+              disabled={isLoggingIn}
+            />
+            <button type="submit" disabled={isLoggingIn}>
+              {isLoggingIn
+                ? authMode === "login"
+                  ? "Logging in..."
+                  : "Creating account..."
+                : authMode === "login"
+                  ? "Log in"
+                  : "Create account"}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            className="auth-mode-button"
+            onClick={() => {
+              setAuthError("");
+              setAuthMode((currentMode) =>
+                currentMode === "login" ? "register" : "login",
+              );
+            }}
+          >
+            {authMode === "login"
+              ? "Create a new account"
+              : "Log in with an existing account"}
+          </button>
+
+          {authError && <p className="error-message">{authError}</p>}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="app">
       <section className="todo-panel">
-        <h1>Todos</h1>
+        <div className="todo-header">
+          <h1>Todos</h1>
+          <button type="button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
 
         <TodoForm
           title={title}

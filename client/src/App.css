@@ -16,6 +16,83 @@
   line-height: 1.2;
 }
 
+.todo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.todo-header h1 {
+  margin: 0;
+}
+
+.todo-header button {
+  border: 1px solid #d9dde5;
+  border-radius: 6px;
+  padding: 7px 12px;
+  background: #ffffff;
+  color: #344054;
+  cursor: pointer;
+}
+
+.todo-header button:hover {
+  background: #f2f4f7;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+}
+
+.auth-form input {
+  height: 44px;
+  border: 1px solid #d9dde5;
+  border-radius: 6px;
+  padding: 0 12px;
+  font: inherit;
+  background: #ffffff;
+  color: #171923;
+}
+
+.auth-form button {
+  height: 44px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 600;
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.auth-form button:hover {
+  background: #1d4ed8;
+}
+
+.auth-form input:disabled,
+.auth-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auth-mode-button {
+  margin-top: 12px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-mode-button:hover {
+  color: #1d4ed8;
+}
+
 .todo-form {
   display: flex;
   gap: 12px;
