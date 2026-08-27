@@ -1,15 +1,8 @@
 import type { Response } from "express";
 
-type ErrorCode =
-  | "INVALID_QUERY"
-  | "INVALID_BODY"
-  | "INVALID_PARAMS"
-  | "TODO_NOT_FOUND"
-  | "INTERNAL_SERVER_ERROR"
-  | "CONFLICT"
-  | "UNAUTHORIZED";
+import type { ErrorCode } from "./errors.js";
 
-function errorResponse(
+export function sendErrorResponse(
   response: Response,
   status: number,
   code: ErrorCode,
@@ -22,7 +15,7 @@ function errorResponse(
 }
 
 export function unauthorized(response: Response, message: string) {
-  errorResponse(response, 401, "UNAUTHORIZED", message);
+  sendErrorResponse(response, 401, "UNAUTHORIZED", message);
 }
 
 export function badRequest(
@@ -30,15 +23,15 @@ export function badRequest(
   code: ErrorCode,
   message: string,
 ) {
-  errorResponse(response, 400, code, message);
+  sendErrorResponse(response, 400, code, message);
 }
 
 export function notFound(response: Response, code: ErrorCode, message: string) {
-  errorResponse(response, 404, code, message);
+  sendErrorResponse(response, 404, code, message);
 }
 
 export function internalServerError(response: Response) {
-  errorResponse(
+  sendErrorResponse(
     response,
     500,
     "INTERNAL_SERVER_ERROR",
@@ -47,5 +40,5 @@ export function internalServerError(response: Response) {
 }
 
 export function conflict(response: Response, code: ErrorCode, message: string) {
-  errorResponse(response, 409, code, message);
+  sendErrorResponse(response, 409, code, message);
 }

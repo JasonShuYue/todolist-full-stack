@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Prisma } from "@prisma/client";
 
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { badRequest, conflict } from "../lib/http.js";
+import { badRequestError, conflictError } from "../lib/errors.js";
 import { parseWithSchema } from "../lib/validation.js";
 import { loginBodySchema, registerBodySchema } from "../schemas/auth.js";
 import { loginUser, registerUser } from "../services/auth.js";
@@ -13,8 +13,7 @@ authRouter.post("/register", asyncHandler(async (request, response) => {
   const parseResult = parseWithSchema(registerBodySchema, request.body);
 
   if (!parseResult.success) {
-    badRequest(response, "INVALID_BODY", "Invalid register body");
-    return;
+    throw badRequestError("INVALID_BODY", "Invalid register body");
   }
 
   try {
@@ -25,28 +24,25 @@ authRouter.post("/register", asyncHandler(async (request, response) => {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      conflict(response, "CONFLICT", "Email already exists");
-      return;
+      throw conflictError("CONFLICT", "Email already exists");
     }
 
     throw error;
   }
-}, "Failed to register user"));
+}));
 
 authRouter.post("/login", asyncHandler(async (request, response) => {
   const parseResult = parseWithSchema(loginBodySchema, request.body);
 
   if (!parseResult.success) {
-    badRequest(response, "INVALID_BODY", "Invalid login body");
-    return;
+    throw badRequestError("INVALID_BODY", "Invalid login body");
   }
 
   const user = await loginUser(parseResult.data);
 
   if (!user) {
-    badRequest(response, "INVALID_BODY", "Invalid email or password");
-    return;
+    throw badRequestError("INVALID_BODY", "Invalid email or password");
   }
 
   response.json(user);
-}, "Failed to login user"));
+}));

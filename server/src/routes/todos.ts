@@ -1,8 +1,11 @@
 import { Router } from "express";
 
-import { isTodoNotFoundError } from "../lib/errors.js";
+import {
+  badRequestError,
+  isTodoNotFoundError,
+  notFoundError,
+} from "../lib/errors.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { badRequest, notFound } from "../lib/http.js";
 import { isRecordNotFoundError } from "../lib/prisma.js";
 import { parseWithSchema } from "../lib/validation.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -38,8 +41,7 @@ todosRouter.get(
     const userId = getAuthenticatedUserId(request);
 
     if (!parseResult.success) {
-      badRequest(response, "INVALID_QUERY", "Invalid query");
-      return;
+      throw badRequestError("INVALID_QUERY", "Invalid query");
     }
 
     const {
@@ -58,7 +60,7 @@ todosRouter.get(
     });
 
     response.json(result);
-  }, "Failed to list todos"),
+  }),
 );
 
 todosRouter.post(
@@ -68,8 +70,7 @@ todosRouter.post(
     const userId = getAuthenticatedUserId(request);
 
     if (!parseResult.success) {
-      badRequest(response, "INVALID_BODY", "Title is required");
-      return;
+      throw badRequestError("INVALID_BODY", "Title is required");
     }
 
     const { title } = parseResult.data;
@@ -80,7 +81,7 @@ todosRouter.post(
     });
 
     response.status(201).json(todo);
-  }, "Failed to create todo"),
+  }),
 );
 
 todosRouter.patch(
@@ -90,8 +91,7 @@ todosRouter.patch(
     const userId = getAuthenticatedUserId(request);
 
     if (!parseParamsResult.success) {
-      badRequest(response, "INVALID_PARAMS", "Invalid todo id");
-      return;
+      throw badRequestError("INVALID_PARAMS", "Invalid todo id");
     }
 
     const { id } = parseParamsResult.data;
@@ -99,9 +99,7 @@ todosRouter.patch(
     const parseResult = parseWithSchema(updateTodoBodySchema, request.body);
 
     if (!parseResult.success) {
-      badRequest(response, "INVALID_BODY", "Invalid todo update");
-
-      return;
+      throw badRequestError("INVALID_BODY", "Invalid todo update");
     }
 
     const { title, completed } = parseResult.data;
@@ -117,13 +115,12 @@ todosRouter.patch(
       response.json(todo);
     } catch (error) {
       if (isRecordNotFoundError(error) || isTodoNotFoundError(error)) {
-        notFound(response, "TODO_NOT_FOUND", "Todo not found");
-        return;
+        throw notFoundError("TODO_NOT_FOUND", "Todo not found");
       }
 
       throw error;
     }
-  }, "Failed to update todo"),
+  }),
 );
 
 todosRouter.delete(
@@ -133,8 +130,7 @@ todosRouter.delete(
     const userId = getAuthenticatedUserId(request);
 
     if (!parseParamsResult.success) {
-      badRequest(response, "INVALID_PARAMS", "Invalid todo id");
-      return;
+      throw badRequestError("INVALID_PARAMS", "Invalid todo id");
     }
 
     const { id } = parseParamsResult.data;
@@ -148,11 +144,10 @@ todosRouter.delete(
       response.status(204).send();
     } catch (error) {
       if (isRecordNotFoundError(error) || isTodoNotFoundError(error)) {
-        notFound(response, "TODO_NOT_FOUND", "Todo not found");
-        return;
+        throw notFoundError("TODO_NOT_FOUND", "Todo not found");
       }
 
       throw error;
     }
-  }, "Failed to delete todo"),
+  }),
 );

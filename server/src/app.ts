@@ -8,6 +8,7 @@ import { todosRouter } from "./routes/todos.js";
 import { authRouter } from "./routes/auth.js";
 import { logError } from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,6 +55,8 @@ app.get("/health/ready", async (request, response) => {
     });
   }
 });
+
+app.use(errorHandler);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(clientDistPath));
