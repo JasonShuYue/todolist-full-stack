@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { ApiError } from "../api/errors";
 import {
@@ -80,16 +80,16 @@ export function useTodos({
   const [busyTodoId, setBusyTodoId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  function handleApiError(error: unknown, fallbackMessage: string) {
+  const handleApiError = useCallback((error: unknown, fallbackMessage: string) => {
     if (isUnauthorizedError(error)) {
       onUnauthorized?.();
       return;
     }
 
     setErrorMessage(getErrorMessage(error, fallbackMessage));
-  }
+  }, [onUnauthorized]);
 
-  async function loadTodos(
+  const loadTodos = useCallback(async function loadTodos(
     status: TodoFilter,
     searchTerm: string,
     nextPage: number,
@@ -108,7 +108,7 @@ export function useTodos({
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [handleApiError, pageSize]);
 
   function setFilter(nextFilter: TodoFilter) {
     setPage(1);
@@ -286,12 +286,13 @@ export function useTodos({
 
   useEffect(() => {
     if (!enabled) {
-      setIsLoading(false);
       return;
     }
 
+    // This effect intentionally starts the async request that synchronizes todos.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadTodos(filter, debouncedSearch, page);
-  }, [enabled, filter, debouncedSearch, page, onUnauthorized]);
+  }, [enabled, filter, debouncedSearch, page, loadTodos]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams();
@@ -325,7 +326,7 @@ export function useTodos({
     page,
     total,
     totalPages,
-    isLoading,
+    isLoading: enabled && isLoading,
     isCreating,
     busyTodoId,
     errorMessage,

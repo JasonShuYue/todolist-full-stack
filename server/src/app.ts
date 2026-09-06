@@ -17,7 +17,16 @@ const clientDistPath = path.resolve(__dirname, "../../client/dist");
 
 export const app = express(); // 初始化实例
 
-app.use(cors()); // 跨域中间件
+const corsOrigins = process.env.CORS_ORIGIN?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production" ? (corsOrigins ?? false) : true,
+  }),
+);
 
 app.use(requestLogger);
 

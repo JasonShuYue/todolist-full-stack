@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { unauthorized } from "../lib/http.js";
+import { unauthorizedError } from "../lib/errors.js";
 import { verifyToken } from "../lib/jwt.js";
 
 export function requireAuth(
@@ -11,16 +11,14 @@ export function requireAuth(
   const authorization = request.header("authorization");
 
   if (!authorization?.startsWith("Bearer ")) {
-    unauthorized(response, "Unauthorized");
-    return;
+    throw unauthorizedError("Unauthorized");
   }
 
   const token = authorization.slice("Bearer ".length);
   const payload = verifyToken(token);
 
   if (!payload) {
-    unauthorized(response, "Unauthorized");
-    return;
+    throw unauthorizedError("Unauthorized");
   }
 
   request.userId = payload.userId;
