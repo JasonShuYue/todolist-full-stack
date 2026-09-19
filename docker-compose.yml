@@ -1,0 +1,18 @@
+services:
+    app:
+      build: .
+      image: todolist-full-stack:local
+      ports:
+        - "3000:3000"
+      environment:
+        NODE_ENV: production
+        PORT: 3000
+        DATABASE_URL: file:/app/data/dev.db
+        JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in environment}
+        CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      volumes:
+        - todolist-data:/app/data
+      restart: unless-stopped
+
+volumes:
+  todolist-data:
