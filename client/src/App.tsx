@@ -7,6 +7,20 @@ import { TodoToolbar } from "./components/TodoToolbar";
 import { useAuth } from "./hooks/useAuth";
 import { useTodos } from "./hooks/useTodos";
 
+function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <a
+        href="https://beian.miit.gov.cn/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        浙ICP备2026082311号
+      </a>
+    </footer>
+  );
+}
+
 function App() {
   const {
     authError,
@@ -67,6 +81,7 @@ function App() {
             onToggleMode={toggleAuthMode}
           />
         </section>
+        <SiteFooter />
       </main>
     );
   }
@@ -121,6 +136,7 @@ function App() {
           onPageChange={setPage}
         />
       </section>
+      <SiteFooter />
     </main>
   );
 }
