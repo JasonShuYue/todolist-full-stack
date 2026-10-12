@@ -12,6 +12,11 @@ services:
         CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       volumes:
         - todolist-data:/app/data
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
       restart: unless-stopped
 
 volumes:
