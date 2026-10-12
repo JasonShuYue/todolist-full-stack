@@ -22,7 +22,7 @@ docker run --rm \
   -v "$VOLUME:/data:ro" \
   -v "$BACKUP_DIR:/backup" \
   "$IMAGE" \
-  sh -c 'cp /data/dev.db "/backup/$1"' \
+  sh -c 'umask 077; cp /data/dev.db "/backup/$1"' \
   sh "$BACKUP_NAME"
 
 test -s "$BACKUP_DIR/$BACKUP_NAME"
