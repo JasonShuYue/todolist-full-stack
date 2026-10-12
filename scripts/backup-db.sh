@@ -32,4 +32,10 @@ if command -v sqlite3 >/dev/null 2>&1; then
   test "$result" = "ok"
 fi
 
+find "$BACKUP_DIR" \
+  -type f \
+  -name 'todolist-*.db' \
+  -mtime +7 \
+  -delete
+
 echo "备份完成：$BACKUP_DIR/$BACKUP_NAME"
