@@ -1,12 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import type { Todo } from "../api/todos";
+import type { Todo, TodoPriority } from "../api/todos";
 
 type TodoItemProps = {
   todo: Todo;
   isBusy: boolean;
   onToggle: (todo: Todo) => void;
-  onUpdateTitle: (todo: Todo, nextTitle: string) => void;
+  onUpdateDetails: (todo: Todo, nextTitle: string, nextPriority: TodoPriority) => void;
   onDelete: (todoId: number) => void;
 };
 
@@ -14,11 +14,12 @@ export function TodoItem({
   todo,
   isBusy,
   onToggle,
-  onUpdateTitle,
+  onUpdateDetails,
   onDelete,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(todo.title);
+  const [draftPriority, setDraftPriority] = useState<TodoPriority>(todo.priority);
 
   function handleStartEditing() {
     if (isBusy) {
@@ -26,17 +27,19 @@ export function TodoItem({
     }
 
     setDraftTitle(todo.title);
+    setDraftPriority(todo.priority);
     setIsEditing(true);
   }
 
   function handleCancelEditing() {
     setDraftTitle(todo.title);
+    setDraftPriority(todo.priority);
     setIsEditing(false);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onUpdateTitle(todo, draftTitle);
+    onUpdateDetails(todo, draftTitle, draftPriority);
     setIsEditing(false);
   }
 
@@ -50,6 +53,16 @@ export function TodoItem({
             autoFocus
             disabled={isBusy}
           />
+          <select
+            aria-label="Priority"
+            value={draftPriority}
+            onChange={(event) => setDraftPriority(event.target.value as TodoPriority)}
+            disabled={isBusy}
+          >
+            <option value="low">Low</option>
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+          </select>
           <button type="submit" disabled={isBusy}>
             {isBusy ? "Saving..." : "Save"}
           </button>
@@ -72,6 +85,10 @@ export function TodoItem({
               {todo.title}
             </span>
           </label>
+
+          <span className={`todo-priority todo-priority-${todo.priority}`}>
+            {todo.priority}
+          </span>
 
           <div className="todo-actions">
             <button type="button" onClick={handleStartEditing} disabled={isBusy}>

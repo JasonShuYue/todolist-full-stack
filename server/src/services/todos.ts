@@ -39,10 +39,10 @@ export async function listTodos({
     ...(status === "completed" ? { completed: true } : {}),
     ...(search.length > 0
       ? {
-          title: {
-            contains: search,
-          },
-        }
+        title: {
+          contains: search,
+        },
+      }
       : {}),
   };
 
@@ -73,11 +73,12 @@ export async function listTodos({
   };
 }
 
-export async function createTodo({ title, userId }: CreateTodoInput) {
+export async function createTodo({ title, userId, priority }: CreateTodoInput) {
   return prisma.todo.create({
     data: {
       title,
       userId,
+      priority
     },
   });
 }
@@ -87,6 +88,7 @@ export async function updateTodo({
   userId,
   title,
   completed,
+  priority
 }: UpdateTodoInput) {
   const result = await prisma.todo.updateMany({
     where: {
@@ -96,6 +98,7 @@ export async function updateTodo({
     data: {
       ...(title !== undefined ? { title } : {}),
       ...(completed !== undefined ? { completed } : {}),
+      ...(priority !== undefined ? { priority } : {}),
     },
   });
 

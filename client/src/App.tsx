@@ -41,6 +41,7 @@ function App() {
   const {
     todos,
     title,
+    priority,
     filter,
     search,
     page,
@@ -51,12 +52,13 @@ function App() {
     busyTodoId,
     errorMessage,
     setTitle,
+    setPriority,
     setFilter,
     setSearch,
     setPage,
     handleCreateTodo,
     handleToggleTodo,
-    handleUpdateTodoTitle,
+    handleUpdateTodoDetails,
     handleDeleteTodo,
   } = useTodos({
     enabled: isAuthenticated,
@@ -101,8 +103,10 @@ function App() {
 
         <TodoForm
           title={title}
+          priority={priority}
           isSubmitting={isCreating}
           onTitleChange={setTitle}
+          onPriorityChange={setPriority}
           onSubmit={handleCreateTodo}
         />
 
@@ -122,8 +126,8 @@ function App() {
             todos={todos}
             busyTodoId={busyTodoId}
             onToggleTodo={(todo) => void handleToggleTodo(todo)}
-            onUpdateTodoTitle={(todo, nextTitle) =>
-              void handleUpdateTodoTitle(todo, nextTitle)
+            onUpdateTodoDetails={(todo, nextTitle, nextPriority) =>
+              void handleUpdateTodoDetails(todo, nextTitle, nextPriority)
             }
             onDeleteTodo={(todoId) => void handleDeleteTodo(todoId)}
           />

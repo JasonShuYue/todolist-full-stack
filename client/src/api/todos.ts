@@ -6,9 +6,12 @@ export type Todo = {
   completed: boolean;
   createdAt: string;
   updatedAt: string;
+  priority: TodoPriority;
 };
 
 export type TodoFilter = "all" | "active" | "completed";
+
+export type TodoPriority = "low" | "normal" | "high";
 
 export type TodosPage = {
   items: Todo[];
@@ -71,7 +74,7 @@ export async function fetchTodos(
   return (await response.json()) as TodosPage;
 }
 
-export async function createTodo(title: string) {
+export async function createTodo(title: string, priority: TodoPriority) {
   const response = await fetch("/api/todos", {
     method: "POST",
     headers: {
@@ -80,6 +83,7 @@ export async function createTodo(title: string) {
     },
     body: JSON.stringify({
       title,
+      priority,
     }),
   });
 
@@ -93,6 +97,7 @@ export async function updateTodo(
   data: {
     title?: string;
     completed?: boolean;
+    priority?: TodoPriority;
   },
 ) {
   const response = await fetch(`/api/todos/${todoId}`, {

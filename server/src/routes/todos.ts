@@ -73,11 +73,12 @@ todosRouter.post(
       throw badRequestError("INVALID_BODY", "Title is required");
     }
 
-    const { title } = parseResult.data;
+    const { title, priority } = parseResult.data;
 
     const todo = await createTodo({
       title,
       userId,
+      priority
     });
 
     response.status(201).json(todo);
@@ -102,7 +103,7 @@ todosRouter.patch(
       throw badRequestError("INVALID_BODY", "Invalid todo update");
     }
 
-    const { title, completed } = parseResult.data;
+    const { title, completed, priority } = parseResult.data;
 
     try {
       const todo = await updateTodo({
@@ -110,6 +111,7 @@ todosRouter.patch(
         userId,
         title,
         completed,
+        priority,
       });
 
       response.json(todo);

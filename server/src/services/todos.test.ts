@@ -218,10 +218,12 @@ describe("createTodo", () => {
     const todo = await createTodo({
       title,
       userId: testUserId,
+      priority: "normal",
     });
 
     expect(todo.title).toBe(title);
     expect(todo.completed).toBe(false);
+    expect(todo.priority).toBe("normal");
   });
 });
 
@@ -284,6 +286,21 @@ describe("updateTodo", () => {
     });
 
     expect(unchangedTodo?.title).toBe("Other user's todo");
+  });
+
+  it("preserves priority when updating only the title", async () => {
+    const todo = await prisma.todo.create({
+      data: { userId: testUserId, title: "Old title", priority: "high" },
+    });
+
+    const updatedTodo = await updateTodo({
+      id: todo.id,
+      userId: testUserId,
+      title: "New title",
+    });
+
+    expect(updatedTodo.title).toBe("New title");
+    expect(updatedTodo.priority).toBe("high");
   });
 });
 

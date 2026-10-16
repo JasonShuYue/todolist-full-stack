@@ -123,7 +123,8 @@
   margin-bottom: 20px;
 }
 
-.todo-form input {
+.todo-form input,
+.todo-form select {
   flex: 1;
   min-width: 0;
   height: 44px;
@@ -133,6 +134,11 @@
   font: inherit;
   background: #ffffff;
   color: #171923;
+}
+
+.todo-form select {
+  flex: 0 0 130px;
+  padding: 0 12px;
 }
 
 .todo-form button {
@@ -152,6 +158,7 @@
 }
 
 .todo-form input:disabled,
+.todo-form select:disabled,
 .todo-form button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -247,6 +254,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 }
 
 .todo-content input {
@@ -262,6 +270,30 @@
 .todo-title.completed {
   color: #667085;
   text-decoration: line-through;
+}
+
+.todo-priority {
+  flex: 0 0 auto;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.todo-priority-low {
+  background: #e9f6ee;
+  color: #216e45;
+}
+
+.todo-priority-normal {
+  background: #eef0f4;
+  color: #475467;
+}
+
+.todo-priority-high {
+  background: #fff0e9;
+  color: #a13f1d;
 }
 
 .todo-actions {
@@ -288,6 +320,7 @@
 .todo-actions button:disabled,
 .todo-edit-form button:disabled,
 .todo-edit-form input:disabled,
+.todo-edit-form select:disabled,
 .todo-content input:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -300,7 +333,8 @@
   width: 100%;
 }
 
-.todo-edit-form input {
+.todo-edit-form input,
+.todo-edit-form select {
   flex: 1;
   min-width: 0;
   height: 36px;
@@ -309,6 +343,11 @@
   padding: 0 10px;
   background: #ffffff;
   color: #171923;
+}
+
+.todo-edit-form select {
+  flex: 0 0 110px;
+  padding: 0 8px;
 }
 
 .delete-button {
@@ -361,6 +400,11 @@
     flex-direction: column;
   }
 
+  .todo-form select {
+    flex-basis: 44px;
+    width: 100%;
+  }
+
   .todo-form button,
   .todo-search button {
     width: 100%;
@@ -374,6 +418,18 @@
   .todo-edit-form {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .todo-item {
+    padding: 12px 14px;
+  }
+
+  .todo-priority {
+    align-self: flex-start;
+  }
+
+  .todo-edit-form select {
+    flex-basis: 36px;
   }
 
   .todo-actions {

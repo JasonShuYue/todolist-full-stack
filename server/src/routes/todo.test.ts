@@ -120,6 +120,7 @@ describe("POST /todos", () => {
 
     expect(response.body.title).toBe("Learn route tests");
     expect(response.body.completed).toBe(false);
+    expect(response.body.priority).toBe("normal");
     expect(response.body.id).toEqual(expect.any(Number));
   });
 
@@ -167,6 +168,21 @@ describe("PATCH /todos/:id", () => {
     expect(response.body.id).toBe(todo.id);
     expect(response.body.title).toBe("New title");
     expect(response.body.completed).toBe(true);
+  });
+
+  it("updates only the priority", async () => {
+    const todo = await prisma.todo.create({
+      data: { title: "Prioritize me", userId: testUserId },
+    });
+
+    const response = await request(app)
+      .patch(`/api/todos/${todo.id}`)
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({ priority: "high" })
+      .expect(200);
+
+    expect(response.body.title).toBe("Prioritize me");
+    expect(response.body.priority).toBe("high");
   });
 
   it("returns 400 when id is invalid", async () => {

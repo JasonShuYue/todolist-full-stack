@@ -8,6 +8,7 @@ import {
   updateTodo,
   type Todo,
   type TodoFilter,
+  type TodoPriority,
 } from "../api/todos";
 
 export function getInitialFilter(): TodoFilter {
@@ -64,6 +65,7 @@ export function useTodos({
   const hasCompletedInitialSearchSync = useRef(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<TodoPriority>("normal");
   const [filter, setFilterState] = useState<TodoFilter>(() =>
     getInitialFilter(),
   );
@@ -127,9 +129,10 @@ export function useTodos({
     setIsCreating(true);
 
     try {
-      await createTodo(trimmedTitle);
+      await createTodo(trimmedTitle, priority);
       await loadTodos(filter, debouncedSearch, 1);
       setTitle("");
+      setPriority("normal");
       setErrorMessage("");
     } catch (error) {
       handleApiError(error, "Failed to create todo");
@@ -201,12 +204,16 @@ export function useTodos({
     }
   }
 
-  async function handleUpdateTodoTitle(todo: Todo, nextTitle: string) {
+  async function handleUpdateTodoDetails(
+    todo: Todo,
+    nextTitle: string,
+    nextPriority: TodoPriority,
+  ) {
     const trimmedTitle = nextTitle.trim();
 
     if (
       trimmedTitle.length === 0 ||
-      trimmedTitle === todo.title ||
+      (trimmedTitle === todo.title && nextPriority === todo.priority) ||
       busyTodoId !== null
     ) {
       return;
@@ -217,6 +224,7 @@ export function useTodos({
     try {
       const updatedTodo = await updateTodo(todo.id, {
         title: trimmedTitle,
+        priority: nextPriority,
       });
 
       if (debouncedSearch.trim().length === 0) {
@@ -321,6 +329,7 @@ export function useTodos({
   return {
     todos,
     title,
+    priority,
     filter,
     search,
     page,
@@ -331,12 +340,13 @@ export function useTodos({
     busyTodoId,
     errorMessage,
     setTitle,
+    setPriority,
     setFilter,
     setSearch,
     setPage,
     handleCreateTodo,
     handleToggleTodo,
-    handleUpdateTodoTitle,
+    handleUpdateTodoDetails,
     handleDeleteTodo,
   };
 }
